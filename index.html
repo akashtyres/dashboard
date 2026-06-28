@@ -68,16 +68,13 @@
   .pct{ font-family:'JetBrains Mono',Consolas,'Cascadia Mono','Courier New',monospace; font-size:14px; font-weight:700; margin-top:12px; }
   .label{ font-size:14px; font-weight:700; margin-top:3px; text-align:center; }
 
-  /* Simple stat card (Puncture repair -- count only, no target/ring) */
-  .simple-stat-card{ justify-content:center; min-height:222px; }
+  /* Simple stat card -- used for every KPI now (no target/ring design) */
+  .simple-stat-card{ justify-content:center; min-height:200px; }
   .simple-stat-count{
     font-family:'JetBrains Mono',Consolas,'Cascadia Mono','Courier New',monospace;
-    font-size:64px; font-weight:800; line-height:1; color:var(--black); margin-bottom:10px;
+    font-size:60px; font-weight:800; line-height:1; color:var(--black); margin-bottom:10px;
   }
-
-  /* Revenue cards */
-  .revenue-card{ align-items:stretch; }
-  .revenue-card .amount{ font-family:'JetBrains Mono',Consolas,'Cascadia Mono','Courier New',monospace; font-size:38px; font-weight:700; color:var(--black); align-self:flex-start; }
+  .simple-stat-card[data-currency="1"] .simple-stat-count{ font-size:42px; word-break:break-word; }
   .bar-track{ height:10px; border-radius:5px; background:var(--ring-track); margin-top:16px; overflow:hidden; }
   .bar-fill{ height:100%; border-radius:5px; background:var(--red); transition:width 0.6s ease, background 0.4s ease; }
   .revenue-card .pct{ align-self:flex-start; margin-top:10px; }
@@ -193,15 +190,6 @@
   .logout-link{ margin-left:auto; font-size:13px; color:var(--text-dim); cursor:pointer; text-decoration:underline; }
   .logout-link:hover{ color:var(--text); }
 
-  /* Period mode: hide per-day target visuals, show plain totals instead */
-  .period-mode .ring-wrap{ display:none; }
-  .period-mode .ring-target{ display:none; }
-  .period-mode .pct{ display:none !important; }
-  .period-mode .card[data-key] .ring-count{
-    font-size:48px; margin-top:30px; margin-bottom:30px;
-  }
-  .period-mode .bar-track, .period-mode .no-target-note{ display:none !important; }
-
   /* Day Book section */
   .daybook-toggle{
     width:100%; text-align:left; padding:16px 20px; background:var(--panel); border:1px solid var(--panel-edge);
@@ -269,101 +257,63 @@
 <div class="wrap">
   <div class="brand-bar"></div>
   <header>
-    <h1>Today's progress <span id="dateLabel"></span></h1>
+    <h1>Akash Tyres <span id="dateLabel"></span></h1>
     <div class="clock" id="clock">--:--:--</div>
   </header>
 
   <div class="controls-bar">
     <button class="ctrl-btn active" id="btnToday">Today</button>
     <div class="ctrl-divider"></div>
-    <input type="date" class="ctrl-date-input" id="datePicker">
-    <div class="ctrl-divider"></div>
     <button class="ctrl-btn" id="btnPresetWeek">This Week</button>
     <button class="ctrl-btn" id="btnPresetMonth">This Month</button>
     <button class="ctrl-btn" id="btnPresetLastMonth">Last Month</button>
     <div class="ctrl-divider"></div>
     <div class="ctrl-range">
-      <input type="date" class="ctrl-date-input" id="rangeStart">
+      <input type="date" class="ctrl-date-input" id="fromDate">
       <span>to</span>
-      <input type="date" class="ctrl-date-input" id="rangeEnd">
+      <input type="date" class="ctrl-date-input" id="toDate">
       <button class="ctrl-btn" id="btnApplyRange">Apply</button>
     </div>
     <span class="logout-link" id="logoutLink">Log out</span>
   </div>
   <div class="view-label" id="viewLabel"><span class="live-dot"></span> Showing: Today (live)</div>
 
-  <div class="section-label">Jobs &amp; units vs target</div>
+  <div class="section-label">Jobs &amp; units</div>
   <div class="cards" id="ringCards">
-    <div class="card" data-key="alignment">
+    <div class="card simple-stat-card" data-stat="alignment">
       <div class="kicker">Wheel alignment</div>
-      <div class="ring-wrap">
-        <svg viewBox="0 0 200 200">
-          <circle class="ring-bg" cx="100" cy="100" r="86"></circle>
-          <circle class="ring-fg" cx="100" cy="100" r="86" stroke="#d31a14"></circle>
-        </svg>
-        <div class="ring-center">
-          <div class="ring-count">0</div>
-          <div class="ring-target">of 0 target</div>
-        </div>
-      </div>
-      <div class="pct">0%</div>
-      <div class="label">Jobs done today</div>
+      <div class="simple-stat-count">0</div>
+      <div class="label">Jobs done</div>
     </div>
 
-    <div class="card" data-key="balancing">
+    <div class="card simple-stat-card" data-stat="balancing">
       <div class="kicker">Wheel balancing</div>
-      <div class="ring-wrap">
-        <svg viewBox="0 0 200 200">
-          <circle class="ring-bg" cx="100" cy="100" r="86"></circle>
-          <circle class="ring-fg" cx="100" cy="100" r="86" stroke="#d31a14"></circle>
-        </svg>
-        <div class="ring-center">
-          <div class="ring-count">0</div>
-          <div class="ring-target">of 0 target</div>
-        </div>
-      </div>
-      <div class="pct">0%</div>
-      <div class="label">Jobs done today</div>
+      <div class="simple-stat-count">0</div>
+      <div class="label">Jobs done</div>
     </div>
 
-    <div class="card" data-key="pcr">
+    <div class="card simple-stat-card" data-stat="pcr">
       <div class="kicker">Car/SUV tyre sales</div>
-      <div class="ring-wrap">
-        <svg viewBox="0 0 200 200">
-          <circle class="ring-bg" cx="100" cy="100" r="86"></circle>
-          <circle class="ring-fg" cx="100" cy="100" r="86" stroke="#d31a14"></circle>
-        </svg>
-        <div class="ring-center">
-          <div class="ring-count">0</div>
-          <div class="ring-target">of 0 target</div>
-        </div>
-      </div>
-      <div class="pct">0%</div>
-      <div class="label">Units sold today</div>
+      <div class="simple-stat-count">0</div>
+      <div class="label">Units sold</div>
     </div>
 
     <div class="card simple-stat-card" data-stat="puncture">
       <div class="kicker">Puncture repair</div>
       <div class="simple-stat-count">0</div>
-      <div class="label">Jobs done today</div>
+      <div class="label">Jobs done</div>
     </div>
   </div>
 
   <div class="section-label">Revenue</div>
   <div class="row2">
-    <div class="card revenue-card" data-rev="service">
+    <div class="card simple-stat-card" data-stat="service_revenue" data-currency="1">
       <div class="kicker">Service revenue</div>
-      <div class="amount">₹0</div>
-      <div class="bar-track" style="display:none;"><div class="bar-fill" style="width:0%;"></div></div>
-      <div class="pct" style="display:none;">0%</div>
-      <div class="no-target-note" style="display:none;">No daily target set</div>
+      <div class="simple-stat-count">₹0</div>
     </div>
-    <div class="card revenue-card" data-rev="tyres">
+    <div class="card simple-stat-card" data-stat="tyre_revenue" data-currency="1">
       <div class="kicker">Tyre sales revenue</div>
-      <div class="amount">₹0</div>
-      <div class="bar-track" style="display:none;"><div class="bar-fill" style="width:0%;"></div></div>
-      <div class="pct" style="display:none;">0%</div>
-      <div class="no-target-note" style="display:none;">No daily target set</div>
+      <div class="simple-stat-count">₹0</div>
     </div>
   </div>
 
@@ -426,20 +376,6 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-const RADIUS = 86;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-
-document.querySelectorAll('.ring-fg').forEach(c => {
-  c.style.strokeDasharray = CIRCUMFERENCE.toFixed(1);
-  c.style.strokeDashoffset = CIRCUMFERENCE.toFixed(1);
-});
-
-function colorFor(pct){
-  if (pct >= 100) return '#167a51';
-  if (pct >= 60) return '#c17a00';
-  return '#d31a14';
-}
-
 function fmtINR(n){
   n = Math.round(n || 0);
   return '₹' + n.toLocaleString('en-IN');
@@ -449,44 +385,6 @@ function escapeHtml(s){
   const d = document.createElement('div');
   d.textContent = s ?? '';
   return d.innerHTML;
-}
-
-function updateRingCard(key, value, target){
-  const card = document.querySelector(`.card[data-key="${key}"]`);
-  if (!card) return;
-  const pct = target > 0 ? Math.min(999, Math.round((value / target) * 100)) : 0;
-  const ring = card.querySelector('.ring-fg');
-  const offset = CIRCUMFERENCE * (1 - Math.min(1, target > 0 ? value / target : 0));
-  ring.style.strokeDashoffset = offset.toFixed(1);
-  ring.style.stroke = colorFor(pct);
-  card.querySelector('.ring-count').textContent = value;
-  card.querySelector('.ring-target').textContent = `of ${target} target`;
-  const pctEl = card.querySelector('.pct');
-  pctEl.textContent = pct + '%';
-  pctEl.style.color = colorFor(pct);
-}
-
-function updateRevenueCard(key, value, target){
-  const card = document.querySelector(`.card[data-rev="${key}"]`);
-  if (!card) return;
-  card.querySelector('.amount').textContent = fmtINR(value);
-  const barTrack = card.querySelector('.bar-track');
-  const pctEl = card.querySelector('.pct');
-  const noTarget = card.querySelector('.no-target-note');
-  if (target > 0){
-    const pct = Math.min(999, Math.round((value / target) * 100));
-    barTrack.style.display = 'block';
-    pctEl.style.display = 'block';
-    noTarget.style.display = 'none';
-    card.querySelector('.bar-fill').style.width = Math.min(100, pct) + '%';
-    card.querySelector('.bar-fill').style.background = colorFor(pct);
-    pctEl.textContent = pct + '% of ' + fmtINR(target) + ' target';
-    pctEl.style.color = colorFor(pct);
-  } else {
-    barTrack.style.display = 'none';
-    pctEl.style.display = 'none';
-    noTarget.style.display = 'block';
-  }
 }
 
 function updateItemSalesTable(items){
@@ -512,10 +410,10 @@ function renderMoneyRows(containerId, cashMap, bankMap){
   if (!el) return;
   const rows = [];
   for (const [name, amt] of Object.entries(cashMap || {})){
-    rows.push(`<div class="money-row"><span class="money-label">${escapeHtml(name)}</span><span class="money-amt">${fmtINR(amt)}</span></div>`);
+    rows.push(`<div class="money-row"><span class="money-label">${escapeHtml(name)}</span><span class="money-amt">${fmtINR(Number(amt))}</span></div>`);
   }
   for (const [name, amt] of Object.entries(bankMap || {})){
-    rows.push(`<div class="money-row"><span class="money-label">${escapeHtml(name)}</span><span class="money-amt">${fmtINR(amt)}</span></div>`);
+    rows.push(`<div class="money-row"><span class="money-label">${escapeHtml(name)}</span><span class="money-amt">${fmtINR(Number(amt))}</span></div>`);
   }
   el.innerHTML = rows.join('') || '<div class="empty-note">No data yet</div>';
 }
@@ -528,13 +426,13 @@ setClock();
 setInterval(setClock, 1000);
 
 function applyData(data){
-  updateRingCard('alignment', data.alignment ?? 0, data.targets?.alignment ?? 0);
-  updateRingCard('balancing', data.balancing ?? 0, data.targets?.balancing ?? 0);
-  updateRingCard('pcr', data.pcr ?? 0, data.targets?.pcr ?? 0);
+  updateSimpleStat('alignment', data.alignment ?? 0);
+  updateSimpleStat('balancing', data.balancing ?? 0);
+  updateSimpleStat('pcr', data.pcr ?? 0);
   updateSimpleStat('puncture', data.puncture ?? 0);
 
-  updateRevenueCard('service', data.service_revenue ?? 0, data.revenue_targets?.service ?? 0);
-  updateRevenueCard('tyres', data.tyre_revenue ?? 0, data.revenue_targets?.tyres ?? 0);
+  updateSimpleStat('service_revenue', fmtINR(data.service_revenue ?? 0));
+  updateSimpleStat('tyre_revenue', fmtINR(data.tyre_revenue ?? 0));
 
   renderMoneyRows('serviceMoneyRows', data.money?.service?.cash, data.money?.service?.bank);
   renderMoneyRows('tyresMoneyRows', data.money?.tyres?.cash, data.money?.tyres?.bank);
@@ -554,7 +452,14 @@ function applyData(data){
 // Date helpers
 // ---------------------------------------------------------------------
 function toISO(d){
-  return d.toISOString().slice(0, 10);
+  // IMPORTANT: do NOT use d.toISOString() here -- it converts to UTC, which
+  // silently shifts the date backward by one day for timezones ahead of
+  // UTC (like IST, +5:30). This caused "Today" and period ranges to be
+  // off by a day. Build the string from LOCAL calendar components instead.
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 function isoToTallyLabel(iso){
   const d = new Date(iso + 'T00:00:00');
@@ -616,7 +521,6 @@ function mergeKpiDocs(docs){
   const merged = {
     alignment: 0, balancing: 0, pcr: 0, puncture: 0,
     service_revenue: 0, tyre_revenue: 0,
-    targets: {}, revenue_targets: {},
     item_sales: [],
     money: { service: { cash: {}, bank: {} }, tyres: { cash: {}, bank: {} } },
     status: 'ok', error: null,
@@ -662,10 +566,6 @@ function detachLiveListener(){
   }
 }
 
-function setPeriodModeVisuals(isPeriod){
-  document.getElementById('appContent').classList.toggle('period-mode', isPeriod);
-}
-
 function showStatus(message){
   const banner = document.getElementById('statusBanner');
   if (message){
@@ -681,7 +581,6 @@ async function loadDashboard(mode){
   detachLiveListener();
 
   if (mode.type === 'today'){
-    setPeriodModeVisuals(false);
     document.getElementById('viewLabel').innerHTML = '<span class="live-dot"></span> Showing: Today (live)';
     document.getElementById('dateLabel').textContent = isoToTallyLabel(todayISO());
     liveUnsubscribe = db.collection('dashboard_history').doc(todayISO()).onSnapshot(
@@ -703,7 +602,6 @@ async function loadDashboard(mode){
   }
 
   if (mode.type === 'date'){
-    setPeriodModeVisuals(false);
     document.getElementById('viewLabel').textContent = 'Showing: ' + isoToTallyLabel(mode.date);
     document.getElementById('dateLabel').textContent = isoToTallyLabel(mode.date);
     try{
@@ -724,7 +622,6 @@ async function loadDashboard(mode){
   }
 
   if (mode.type === 'period'){
-    setPeriodModeVisuals(true);
     document.getElementById('viewLabel').textContent =
       'Showing: ' + mode.start + ' to ' + mode.end + ' (combined)';
     document.getElementById('dateLabel').textContent = '';
@@ -754,10 +651,10 @@ function renderVoucherList(vouchers){
   return vouchers.map(v => {
     const itemsRows = (v.items || []).map(it => {
       const qty = (it.qty % 1 === 0) ? it.qty : it.qty.toFixed(1);
-      return `<tr><td>${escapeHtml(it.name)}</td><td class="num">${qty}</td><td class="num">${fmtINR(it.amount)}</td></tr>`;
+      return `<tr><td>${escapeHtml(it.name)}</td><td class="num">${qty}</td><td class="num">${fmtINR(Number(it.amount))}</td></tr>`;
     }).join('');
     const ledgerRows = (v.ledgers || []).map(l => {
-      return `<tr><td>${escapeHtml(l.name)}</td><td class="num">${fmtINR(l.amount)}</td></tr>`;
+      return `<tr><td>${escapeHtml(l.name)}</td><td class="num">${fmtINR(Number(l.amount))}</td></tr>`;
     }).join('');
     const dateLabel = v.date ? v.date.slice(6,8) + '-' + v.date.slice(4,6) + '-' + v.date.slice(0,4) : '—';
     return `
@@ -766,13 +663,19 @@ function renderVoucherList(vouchers){
           <span class="v-date">${dateLabel}</span>
           <span class="v-party">${escapeHtml(v.party || '(no party)')}</span>
           <span class="v-type">${escapeHtml(v.type || '')}</span>
-          <span class="v-total">${fmtINR(v.total)}</span>
+          <span class="v-total">${fmtINR(Number(v.total))}</span>
         </summary>
         <div class="voucher-detail">
           ${itemsRows ? `<div class="voucher-detail-title">Items</div>
-          <table class="detail-table"><tbody>${itemsRows}</tbody></table>` : ''}
+          <table class="detail-table">
+            <thead><tr><td><b>Item</b></td><td class="num"><b>Qty</b></td><td class="num"><b>Amount</b></td></tr></thead>
+            <tbody>${itemsRows}</tbody>
+          </table>` : ''}
           ${ledgerRows ? `<div class="voucher-detail-title">Ledger Postings</div>
-          <table class="detail-table"><tbody>${ledgerRows}</tbody></table>` : ''}
+          <table class="detail-table">
+            <thead><tr><td><b>Ledger</b></td><td class="num"><b>Amount</b></td></tr></thead>
+            <tbody>${ledgerRows}</tbody>
+          </table>` : ''}
         </div>
       </details>`;
   }).join('');
@@ -828,53 +731,56 @@ document.getElementById('daybookToggle').addEventListener('click', () => {
 // ---------------------------------------------------------------------
 // Controls wiring
 // ---------------------------------------------------------------------
+function applyFromTo(){
+  if (dayBookOpen) loadDayBook(currentMode);
+}
+
 document.getElementById('btnToday').addEventListener('click', () => {
   setActiveButton('btnToday');
-  document.getElementById('datePicker').value = '';
+  const t = todayISO();
+  document.getElementById('fromDate').value = t;
+  document.getElementById('toDate').value = t;
   loadDashboard({ type: 'today' });
-  if (dayBookOpen) loadDayBook(currentMode);
-});
-
-document.getElementById('datePicker').addEventListener('change', (e) => {
-  if (!e.target.value) return;
-  setActiveButton(null);
-  loadDashboard({ type: 'date', date: e.target.value });
-  if (dayBookOpen) loadDayBook(currentMode);
+  applyFromTo();
 });
 
 document.getElementById('btnPresetWeek').addEventListener('click', () => {
   setActiveButton('btnPresetWeek');
-  loadDashboard({ type: 'period', start: startOfWeekISO(), end: todayISO() });
-  if (dayBookOpen) loadDayBook(currentMode);
+  document.getElementById('fromDate').value = startOfWeekISO();
+  document.getElementById('toDate').value = todayISO();
 });
 
 document.getElementById('btnPresetMonth').addEventListener('click', () => {
   setActiveButton('btnPresetMonth');
-  loadDashboard({ type: 'period', start: startOfMonthISO(), end: todayISO() });
-  if (dayBookOpen) loadDayBook(currentMode);
+  document.getElementById('fromDate').value = startOfMonthISO();
+  document.getElementById('toDate').value = todayISO();
 });
 
 document.getElementById('btnPresetLastMonth').addEventListener('click', () => {
   setActiveButton('btnPresetLastMonth');
   const r = lastMonthRange();
-  loadDashboard({ type: 'period', start: r.start, end: r.end });
-  if (dayBookOpen) loadDayBook(currentMode);
+  document.getElementById('fromDate').value = r.start;
+  document.getElementById('toDate').value = r.end;
 });
 
 document.getElementById('btnApplyRange').addEventListener('click', () => {
-  const start = document.getElementById('rangeStart').value;
-  const end = document.getElementById('rangeEnd').value;
+  const start = document.getElementById('fromDate').value;
+  const end = document.getElementById('toDate').value;
   if (!start || !end){
-    alert('Pick both a start and end date.');
+    alert('Pick both a From and To date.');
     return;
   }
   if (end < start){
-    alert('End date must be on or after the start date.');
+    alert('To date must be on or after the From date.');
     return;
   }
   setActiveButton(null);
-  loadDashboard({ type: 'period', start, end });
-  if (dayBookOpen) loadDayBook(currentMode);
+  if (start === end){
+    loadDashboard({ type: 'date', date: start });
+  } else {
+    loadDashboard({ type: 'period', start, end });
+  }
+  applyFromTo();
 });
 
 // ---------------------------------------------------------------------
@@ -909,6 +815,9 @@ auth.onAuthStateChanged((user) => {
   if (user){
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appContent').style.display = 'block';
+    const t = todayISO();
+    document.getElementById('fromDate').value = t;
+    document.getElementById('toDate').value = t;
     loadDashboard({ type: 'today' });
   } else {
     document.getElementById('loginScreen').style.display = 'flex';
