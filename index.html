@@ -95,6 +95,20 @@
   }
   .moneyflow-divider{ width:1px; align-self:stretch; background:var(--panel-edge); }
 
+  @media (max-width: 700px){
+    .moneyflow-card{ flex-direction:column; gap:20px; padding:22px; }
+    .moneyflow-divider{ display:none; }
+    .money-col{ padding:0; }
+    .money-col:not(:last-child){ padding-bottom:18px; border-bottom:1px solid var(--panel-edge); }
+    .money-row{
+      flex-direction:column; align-items:flex-start; gap:3px;
+      padding-bottom:10px; border-bottom:1px dashed var(--ring-track);
+    }
+    .money-row:last-child{ border-bottom:none; padding-bottom:0; }
+    .money-label{ white-space:normal; }
+    .money-amt{ font-size:19px; }
+  }
+
   /* Item-wise sales table */
   .table-card{ align-items:stretch; max-height:420px; }
   .table-card .kicker{ margin-bottom:14px; }
