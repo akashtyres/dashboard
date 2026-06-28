@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <style>
   :root{
     --bg: #f5f2ee;
@@ -132,15 +133,164 @@
   .status-banner.show{ display:flex; }
   .brand-bar{ height:6px; border-radius:3px; margin-bottom:24px; background:linear-gradient(90deg, var(--red), var(--black)); }
   .footer-note{ margin-top:26px; font-size:12px; color:var(--text-dim); text-align:center; }
+
+  /* Login screen */
+  #loginScreen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .login-card{
+    background:var(--panel); border:1px solid var(--panel-edge); border-radius:16px;
+    box-shadow:0 1px 3px rgba(17,17,17,0.06), 0 12px 32px rgba(17,17,17,0.08);
+    padding:36px 32px; width:100%; max-width:380px;
+  }
+  .login-card h1{ font-size:22px; margin:0 0 6px; }
+  .login-card .login-sub{ font-size:13px; color:var(--text-dim); margin-bottom:24px; }
+  .login-field{ margin-bottom:16px; }
+  .login-field label{ display:block; font-size:12px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:6px; }
+  .login-field input{
+    width:100%; padding:11px 13px; border:1px solid var(--panel-edge); border-radius:9px;
+    font-family:'Inter',sans-serif; font-size:15px; background:var(--bg); color:var(--text);
+  }
+  .login-field input:focus{ outline:2px solid var(--red); outline-offset:1px; }
+  .login-btn{
+    width:100%; padding:12px; border:none; border-radius:9px; background:var(--red); color:#fff;
+    font-family:'Inter',sans-serif; font-size:15px; font-weight:700; cursor:pointer; margin-top:6px;
+    transition:background 0.15s ease;
+  }
+  .login-btn:hover{ background:#b41711; }
+  .login-btn:disabled{ background:var(--ring-track); color:var(--text-dim); cursor:default; }
+  .login-error{ color:var(--red); font-size:13px; margin-top:14px; display:none; }
+  .login-error.show{ display:block; }
+  #appContent{ display:none; }
+
+  /* Date / period controls */
+  .controls-bar{
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:8px;
+    padding:14px 16px; background:var(--panel); border:1px solid var(--panel-edge); border-radius:12px;
+  }
+  .ctrl-btn{
+    padding:8px 14px; border-radius:8px; border:1px solid var(--panel-edge); background:var(--bg);
+    color:var(--text); font-family:'Inter',sans-serif; font-size:13px; font-weight:600; cursor:pointer;
+    transition:background 0.12s ease, color 0.12s ease;
+  }
+  .ctrl-btn:hover{ background:var(--ring-track); }
+  .ctrl-btn.active{ background:var(--red); color:#fff; border-color:var(--red); }
+  .ctrl-date-input{
+    padding:7px 10px; border-radius:8px; border:1px solid var(--panel-edge); background:var(--bg);
+    color:var(--text); font-family:'Inter',sans-serif; font-size:13px;
+  }
+  .ctrl-divider{ width:1px; height:22px; background:var(--panel-edge); margin:0 4px; }
+  .ctrl-range{ display:flex; align-items:center; gap:6px; }
+  .ctrl-range span{ font-size:12px; color:var(--text-dim); }
+  .view-label{
+    font-size:13px; color:var(--text-dim); margin:0 2px 22px; display:flex; align-items:center; gap:8px;
+  }
+  .view-label .live-dot{
+    width:7px; height:7px; border-radius:50%; background:var(--teal); display:inline-block;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.3; } }
+  .logout-link{ margin-left:auto; font-size:13px; color:var(--text-dim); cursor:pointer; text-decoration:underline; }
+  .logout-link:hover{ color:var(--text); }
+
+  /* Period mode: hide per-day target visuals, show plain totals instead */
+  .period-mode .ring-wrap{ display:none; }
+  .period-mode .ring-target{ display:none; }
+  .period-mode .pct{ display:none !important; }
+  .period-mode .card[data-key] .ring-count{
+    font-size:48px; margin-top:30px; margin-bottom:30px;
+  }
+  .period-mode .bar-track, .period-mode .no-target-note{ display:none !important; }
+
+  /* Day Book section */
+  .daybook-toggle{
+    width:100%; text-align:left; padding:16px 20px; background:var(--panel); border:1px solid var(--panel-edge);
+    border-radius:12px; font-family:'Inter',sans-serif; font-size:14px; font-weight:700; color:var(--black);
+    cursor:pointer; margin-top:30px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .daybook-toggle .chev{ transition:transform 0.2s ease; color:var(--text-dim); }
+  .daybook-toggle.open .chev{ transform:rotate(180deg); }
+  #daybookPanel{ display:none; margin-top:14px; }
+  #daybookPanel.open{ display:block; }
+  .daybook-company-title{
+    font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+    color:var(--red); margin:22px 2px 10px;
+  }
+  .daybook-company-title:first-child{ margin-top:0; }
+  .voucher-row{
+    background:var(--panel); border:1px solid var(--panel-edge); border-radius:10px; margin-bottom:8px; overflow:hidden;
+  }
+  .voucher-row summary{
+    list-style:none; cursor:pointer; padding:12px 16px; display:flex; align-items:center; gap:14px;
+    font-size:13px;
+  }
+  .voucher-row summary::-webkit-details-marker{ display:none; }
+  .voucher-row summary:hover{ background:rgba(211,26,20,0.03); }
+  .v-date{ color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:12px; width:70px; flex-shrink:0; }
+  .v-party{ flex:1; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .v-type{ color:var(--text-dim); font-size:11.5px; text-transform:uppercase; flex-shrink:0; }
+  .v-total{
+    font-family:'JetBrains Mono',monospace; font-weight:700; flex-shrink:0; min-width:90px; text-align:right;
+  }
+  .voucher-detail{ padding:4px 16px 16px; border-top:1px solid var(--panel-edge); }
+  .voucher-detail-title{ font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-dim); margin:12px 0 6px; }
+  table.detail-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.detail-table td{ padding:4px 6px; border-bottom:1px solid rgba(17,17,17,0.05); }
+  table.detail-table td.num{ text-align:right; font-family:'JetBrains Mono',monospace; }
+  .daybook-loading, .daybook-empty{ font-size:13px; color:var(--text-dim); padding:20px; text-align:center; }
+  @media (max-width: 700px){
+    .v-type{ display:none; }
+    .v-date{ width:54px; }
+  }
 </style>
 </head>
 <body>
+
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>Akash Dashboard</h1>
+    <div class="login-sub">Sign in to view today's KPIs and Day Book.</div>
+    <form id="loginForm">
+      <div class="login-field">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" autocomplete="username" required>
+      </div>
+      <div class="login-field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+      <div class="login-error" id="loginError"></div>
+    </form>
+  </div>
+</div>
+
+<div id="appContent">
 <div class="wrap">
   <div class="brand-bar"></div>
   <header>
     <h1>Today's progress <span id="dateLabel"></span></h1>
     <div class="clock" id="clock">--:--:--</div>
   </header>
+
+  <div class="controls-bar">
+    <button class="ctrl-btn active" id="btnToday">Today</button>
+    <div class="ctrl-divider"></div>
+    <input type="date" class="ctrl-date-input" id="datePicker">
+    <div class="ctrl-divider"></div>
+    <button class="ctrl-btn" id="btnPresetWeek">This Week</button>
+    <button class="ctrl-btn" id="btnPresetMonth">This Month</button>
+    <button class="ctrl-btn" id="btnPresetLastMonth">Last Month</button>
+    <div class="ctrl-divider"></div>
+    <div class="ctrl-range">
+      <input type="date" class="ctrl-date-input" id="rangeStart">
+      <span>to</span>
+      <input type="date" class="ctrl-date-input" id="rangeEnd">
+      <button class="ctrl-btn" id="btnApplyRange">Apply</button>
+    </div>
+    <span class="logout-link" id="logoutLink">Log out</span>
+  </div>
+  <div class="view-label" id="viewLabel"><span class="live-dot"></span> Showing: Today (live)</div>
 
   <div class="section-label">Jobs &amp; units vs target</div>
   <div class="cards" id="ringCards">
@@ -246,8 +396,18 @@
     </div>
   </div>
 
+  <button class="daybook-toggle" id="daybookToggle">
+    <span>View Day Book &amp; Ledger Entries</span>
+    <span class="chev">▾</span>
+  </button>
+  <div id="daybookPanel">
+    <div class="daybook-loading" id="daybookLoading" style="display:none;">Loading vouchers…</div>
+    <div id="daybookContent"></div>
+  </div>
+
   <div class="status-banner" id="statusBanner">Lost connection to the dashboard feed — showing last known numbers.</div>
   <div class="footer-note" id="updatedNote">Waiting for first update…</div>
+</div>
 </div>
 
 <script>
@@ -264,6 +424,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
 const RADIUS = 86;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -282,6 +443,12 @@ function colorFor(pct){
 function fmtINR(n){
   n = Math.round(n || 0);
   return '₹' + n.toLocaleString('en-IN');
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s ?? '';
+  return d.innerHTML;
 }
 
 function updateRingCard(key, value, target){
@@ -325,7 +492,7 @@ function updateRevenueCard(key, value, target){
 function updateItemSalesTable(items){
   const body = document.getElementById('itemSalesBody');
   if (!items || items.length === 0){
-    body.innerHTML = '<tr><td colspan="2" class="empty-note">No tyre sales recorded yet today.</td></tr>';
+    body.innerHTML = '<tr><td colspan="2" class="empty-note">No tyre sales recorded for this period.</td></tr>';
     return;
   }
   body.innerHTML = items.map(it => {
@@ -353,16 +520,9 @@ function renderMoneyRows(containerId, cashMap, bankMap){
   el.innerHTML = rows.join('') || '<div class="empty-note">No data yet</div>';
 }
 
-function escapeHtml(s){
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
 function setClock(){
   const now = new Date();
   document.getElementById('clock').textContent = now.toLocaleTimeString();
-  document.getElementById('dateLabel').textContent = now.toLocaleDateString(undefined, { weekday:'long', month:'short', day:'numeric' });
 }
 setClock();
 setInterval(setClock, 1000);
@@ -388,28 +548,374 @@ function applyData(data){
   } else {
     banner.classList.remove('show');
   }
-  const updated = data.last_updated ? new Date(data.last_updated).toLocaleTimeString() : '—';
-  document.getElementById('updatedNote').textContent = `Last updated ${updated} · live`;
 }
 
-// Real-time listener: fires instantly whenever the Python script on the
-// SHOP PC pushes a new poll to Firestore -- no fixed refresh interval
-// needed, and no extra reads while nothing has changed.
-db.collection('dashboard').doc('today').onSnapshot(
-  (doc) => {
-    if (doc.exists){
-      applyData(doc.data());
-    } else {
-      document.getElementById('statusBanner').classList.add('show');
-      document.getElementById('statusBanner').textContent = 'No data yet — waiting for the first push from the SHOP PC.';
-    }
-  },
-  (error) => {
-    document.getElementById('statusBanner').classList.add('show');
-    document.getElementById('statusBanner').textContent = 'Could not reach Firestore — check your internet connection.';
-    console.error(error);
+// ---------------------------------------------------------------------
+// Date helpers
+// ---------------------------------------------------------------------
+function toISO(d){
+  return d.toISOString().slice(0, 10);
+}
+function isoToTallyLabel(iso){
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { weekday:'long', month:'short', day:'numeric', year:'numeric' });
+}
+function todayISO(){
+  return toISO(new Date());
+}
+function addDays(iso, n){
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return toISO(d);
+}
+function dateRangeArray(startIso, endIso){
+  const out = [];
+  let cur = startIso;
+  let guard = 0;
+  while (cur <= endIso && guard < 3000){
+    out.push(cur);
+    cur = addDays(cur, 1);
+    guard++;
   }
-);
+  return out;
+}
+function startOfWeekISO(){
+  const d = new Date();
+  const day = d.getDay(); // 0=Sun..6=Sat
+  const diffToMonday = day === 0 ? 6 : day - 1;
+  d.setDate(d.getDate() - diffToMonday);
+  return toISO(d);
+}
+function startOfMonthISO(){
+  const d = new Date();
+  return toISO(new Date(d.getFullYear(), d.getMonth(), 1));
+}
+function lastMonthRange(){
+  const d = new Date();
+  const firstOfThisMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+  const lastMonthEnd = new Date(firstOfThisMonth.getTime() - 86400000);
+  const lastMonthStart = new Date(lastMonthEnd.getFullYear(), lastMonthEnd.getMonth(), 1);
+  return { start: toISO(lastMonthStart), end: toISO(lastMonthEnd) };
+}
+
+// ---------------------------------------------------------------------
+// KPI merging for periods (multiple days summed/merged into one view)
+// ---------------------------------------------------------------------
+function mergeLedgerMaps(maps){
+  const out = {};
+  for (const m of maps){
+    for (const [name, amt] of Object.entries(m || {})){
+      out[name] = (out[name] || 0) + amt;
+    }
+  }
+  return out;
+}
+
+function mergeKpiDocs(docs){
+  // docs: array of KPI dicts (one per day that had data)
+  const merged = {
+    alignment: 0, balancing: 0, pcr: 0, puncture: 0,
+    service_revenue: 0, tyre_revenue: 0,
+    targets: {}, revenue_targets: {},
+    item_sales: [],
+    money: { service: { cash: {}, bank: {} }, tyres: { cash: {}, bank: {} } },
+    status: 'ok', error: null,
+  };
+  const itemTotals = {};
+  for (const d of docs){
+    merged.alignment += d.alignment ?? 0;
+    merged.balancing += d.balancing ?? 0;
+    merged.pcr += d.pcr ?? 0;
+    merged.puncture += d.puncture ?? 0;
+    merged.service_revenue += d.service_revenue ?? 0;
+    merged.tyre_revenue += d.tyre_revenue ?? 0;
+    for (const it of (d.item_sales ?? [])){
+      itemTotals[it.name] = (itemTotals[it.name] || 0) + it.qty;
+    }
+  }
+  merged.item_sales = Object.entries(itemTotals)
+    .map(([name, qty]) => ({ name, qty }))
+    .sort((a, b) => b.qty - a.qty);
+  merged.money.service.cash = mergeLedgerMaps(docs.map(d => d.money?.service?.cash));
+  merged.money.service.bank = mergeLedgerMaps(docs.map(d => d.money?.service?.bank));
+  merged.money.tyres.cash = mergeLedgerMaps(docs.map(d => d.money?.tyres?.cash));
+  merged.money.tyres.bank = mergeLedgerMaps(docs.map(d => d.money?.tyres?.bank));
+  return merged;
+}
+
+// ---------------------------------------------------------------------
+// Mode / view state
+// ---------------------------------------------------------------------
+let currentMode = { type: 'today' };
+let liveUnsubscribe = null;
+let dayBookOpen = false;
+
+function setActiveButton(id){
+  document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+  if (id) document.getElementById(id)?.classList.add('active');
+}
+
+function detachLiveListener(){
+  if (liveUnsubscribe){
+    liveUnsubscribe();
+    liveUnsubscribe = null;
+  }
+}
+
+function setPeriodModeVisuals(isPeriod){
+  document.getElementById('appContent').classList.toggle('period-mode', isPeriod);
+}
+
+function showStatus(message){
+  const banner = document.getElementById('statusBanner');
+  if (message){
+    banner.classList.add('show');
+    banner.textContent = message;
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+async function loadDashboard(mode){
+  currentMode = mode;
+  detachLiveListener();
+
+  if (mode.type === 'today'){
+    setPeriodModeVisuals(false);
+    document.getElementById('viewLabel').innerHTML = '<span class="live-dot"></span> Showing: Today (live)';
+    document.getElementById('dateLabel').textContent = isoToTallyLabel(todayISO());
+    liveUnsubscribe = db.collection('dashboard_history').doc(todayISO()).onSnapshot(
+      (doc) => {
+        if (doc.exists){
+          applyData(doc.data());
+          showStatus(null);
+          document.getElementById('updatedNote').textContent = 'Last updated ' + new Date().toLocaleTimeString() + ' · live';
+        } else {
+          showStatus('No data yet for today — waiting for the first push from the SHOP PC.');
+        }
+      },
+      (error) => {
+        showStatus('Could not reach Firestore — check your internet connection.');
+        console.error(error);
+      }
+    );
+    return;
+  }
+
+  if (mode.type === 'date'){
+    setPeriodModeVisuals(false);
+    document.getElementById('viewLabel').textContent = 'Showing: ' + isoToTallyLabel(mode.date);
+    document.getElementById('dateLabel').textContent = isoToTallyLabel(mode.date);
+    try{
+      const doc = await db.collection('dashboard_history').doc(mode.date).get();
+      if (doc.exists){
+        applyData(doc.data());
+        showStatus(null);
+        document.getElementById('updatedNote').textContent = 'Saved record for ' + mode.date;
+      } else {
+        applyData(mergeKpiDocs([]));
+        showStatus('No data saved for ' + mode.date + '.');
+      }
+    } catch (e){
+      showStatus('Could not reach Firestore — check your internet connection.');
+      console.error(e);
+    }
+    return;
+  }
+
+  if (mode.type === 'period'){
+    setPeriodModeVisuals(true);
+    document.getElementById('viewLabel').textContent =
+      'Showing: ' + mode.start + ' to ' + mode.end + ' (combined)';
+    document.getElementById('dateLabel').textContent = '';
+    try{
+      const dates = dateRangeArray(mode.start, mode.end);
+      const snaps = await Promise.all(dates.map(d => db.collection('dashboard_history').doc(d).get()));
+      const docs = snaps.filter(s => s.exists).map(s => s.data());
+      applyData(mergeKpiDocs(docs));
+      showStatus(docs.length === 0 ? 'No data saved for this period.' : null);
+      document.getElementById('updatedNote').textContent =
+        docs.length + ' of ' + dates.length + ' day(s) in range have saved data';
+    } catch (e){
+      showStatus('Could not reach Firestore — check your internet connection.');
+      console.error(e);
+    }
+    return;
+  }
+}
+
+// ---------------------------------------------------------------------
+// Day Book viewer (lazy-loaded)
+// ---------------------------------------------------------------------
+function renderVoucherList(vouchers){
+  if (!vouchers || vouchers.length === 0){
+    return '<div class="daybook-empty">No vouchers for this period.</div>';
+  }
+  return vouchers.map(v => {
+    const itemsRows = (v.items || []).map(it => {
+      const qty = (it.qty % 1 === 0) ? it.qty : it.qty.toFixed(1);
+      return `<tr><td>${escapeHtml(it.name)}</td><td class="num">${qty}</td><td class="num">${fmtINR(it.amount)}</td></tr>`;
+    }).join('');
+    const ledgerRows = (v.ledgers || []).map(l => {
+      return `<tr><td>${escapeHtml(l.name)}</td><td class="num">${fmtINR(l.amount)}</td></tr>`;
+    }).join('');
+    const dateLabel = v.date ? v.date.slice(6,8) + '-' + v.date.slice(4,6) + '-' + v.date.slice(0,4) : '—';
+    return `
+      <details class="voucher-row">
+        <summary>
+          <span class="v-date">${dateLabel}</span>
+          <span class="v-party">${escapeHtml(v.party || '(no party)')}</span>
+          <span class="v-type">${escapeHtml(v.type || '')}</span>
+          <span class="v-total">${fmtINR(v.total)}</span>
+        </summary>
+        <div class="voucher-detail">
+          ${itemsRows ? `<div class="voucher-detail-title">Items</div>
+          <table class="detail-table"><tbody>${itemsRows}</tbody></table>` : ''}
+          ${ledgerRows ? `<div class="voucher-detail-title">Ledger Postings</div>
+          <table class="detail-table"><tbody>${ledgerRows}</tbody></table>` : ''}
+        </div>
+      </details>`;
+  }).join('');
+}
+
+async function loadDayBook(mode){
+  const loadingEl = document.getElementById('daybookLoading');
+  const contentEl = document.getElementById('daybookContent');
+  loadingEl.style.display = 'block';
+  contentEl.innerHTML = '';
+  try{
+    let serviceVouchers = [];
+    let tyresVouchers = [];
+    if (mode.type === 'today' || mode.type === 'date'){
+      const dateKey = mode.type === 'today' ? todayISO() : mode.date;
+      const doc = await db.collection('daybook_history').doc(dateKey).get();
+      if (doc.exists){
+        serviceVouchers = doc.data().service || [];
+        tyresVouchers = doc.data().tyres || [];
+      }
+    } else if (mode.type === 'period'){
+      const dates = dateRangeArray(mode.start, mode.end);
+      const snaps = await Promise.all(dates.map(d => db.collection('daybook_history').doc(d).get()));
+      for (const s of snaps){
+        if (s.exists){
+          serviceVouchers = serviceVouchers.concat(s.data().service || []);
+          tyresVouchers = tyresVouchers.concat(s.data().tyres || []);
+        }
+      }
+    }
+    contentEl.innerHTML =
+      '<div class="daybook-company-title">Akash Auto Care</div>' + renderVoucherList(serviceVouchers) +
+      '<div class="daybook-company-title">Akash Tyres</div>' + renderVoucherList(tyresVouchers);
+  } catch (e){
+    contentEl.innerHTML = '<div class="daybook-empty">Could not load Day Book data.</div>';
+    console.error(e);
+  } finally {
+    loadingEl.style.display = 'none';
+  }
+}
+
+document.getElementById('daybookToggle').addEventListener('click', () => {
+  const toggle = document.getElementById('daybookToggle');
+  const panel = document.getElementById('daybookPanel');
+  dayBookOpen = !dayBookOpen;
+  toggle.classList.toggle('open', dayBookOpen);
+  panel.classList.toggle('open', dayBookOpen);
+  if (dayBookOpen){
+    loadDayBook(currentMode);
+  }
+});
+
+// ---------------------------------------------------------------------
+// Controls wiring
+// ---------------------------------------------------------------------
+document.getElementById('btnToday').addEventListener('click', () => {
+  setActiveButton('btnToday');
+  document.getElementById('datePicker').value = '';
+  loadDashboard({ type: 'today' });
+  if (dayBookOpen) loadDayBook(currentMode);
+});
+
+document.getElementById('datePicker').addEventListener('change', (e) => {
+  if (!e.target.value) return;
+  setActiveButton(null);
+  loadDashboard({ type: 'date', date: e.target.value });
+  if (dayBookOpen) loadDayBook(currentMode);
+});
+
+document.getElementById('btnPresetWeek').addEventListener('click', () => {
+  setActiveButton('btnPresetWeek');
+  loadDashboard({ type: 'period', start: startOfWeekISO(), end: todayISO() });
+  if (dayBookOpen) loadDayBook(currentMode);
+});
+
+document.getElementById('btnPresetMonth').addEventListener('click', () => {
+  setActiveButton('btnPresetMonth');
+  loadDashboard({ type: 'period', start: startOfMonthISO(), end: todayISO() });
+  if (dayBookOpen) loadDayBook(currentMode);
+});
+
+document.getElementById('btnPresetLastMonth').addEventListener('click', () => {
+  setActiveButton('btnPresetLastMonth');
+  const r = lastMonthRange();
+  loadDashboard({ type: 'period', start: r.start, end: r.end });
+  if (dayBookOpen) loadDayBook(currentMode);
+});
+
+document.getElementById('btnApplyRange').addEventListener('click', () => {
+  const start = document.getElementById('rangeStart').value;
+  const end = document.getElementById('rangeEnd').value;
+  if (!start || !end){
+    alert('Pick both a start and end date.');
+    return;
+  }
+  if (end < start){
+    alert('End date must be on or after the start date.');
+    return;
+  }
+  setActiveButton(null);
+  loadDashboard({ type: 'period', start, end });
+  if (dayBookOpen) loadDayBook(currentMode);
+});
+
+// ---------------------------------------------------------------------
+// Auth
+// ---------------------------------------------------------------------
+document.getElementById('loginForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+  errEl.classList.remove('show');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+  auth.signInWithEmailAndPassword(email, password)
+    .catch((error) => {
+      errEl.textContent = 'Sign-in failed: ' + (error.message || 'check your email and password.');
+      errEl.classList.add('show');
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    });
+});
+
+document.getElementById('logoutLink').addEventListener('click', () => {
+  detachLiveListener();
+  auth.signOut();
+});
+
+auth.onAuthStateChanged((user) => {
+  if (user){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appContent').style.display = 'block';
+    loadDashboard({ type: 'today' });
+  } else {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('appContent').style.display = 'none';
+    detachLiveListener();
+  }
+});
 </script>
 </body>
 </html>
