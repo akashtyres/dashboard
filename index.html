@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Akash Auto Care — Today's progress</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    --bg: #f5f2ee;
+    --panel: #ffffff;
+    --panel-edge: rgba(17,17,17,0.14);
+    --ring-track: #e7e1d9;
+    --text: #161311;
+    --text-dim: #6e6358;
+    --amber: #c17a00;
+    --teal: #167a51;
+    --red: #d31a14;
+    --black: #15120f;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; height:100%; background:var(--bg); color:var(--text);
+    font-family:'Inter',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+    background-image:
+      repeating-linear-gradient(135deg, rgba(0,0,0,0.025) 0px, rgba(0,0,0,0.025) 2px, transparent 2px, transparent 14px);
+  }
+  .wrap{ max-width:1320px; margin:0 auto; padding: 32px 28px 40px; }
+  header{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:28px; flex-wrap:wrap; gap:10px; }
+  h1{ font-size:26px; font-weight:700; margin:0; letter-spacing:0.2px; color:var(--black); }
+  h1 span{ color: var(--text-dim); font-weight:500; }
+  .clock{ font-family:'JetBrains Mono',Consolas,'Cascadia Mono','Courier New',monospace; font-size:15px; color:var(--text-dim); }
+
+  .section-label{ font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--text-dim); margin:30px 2px 12px; }
+  .section-label:first-of-type{ margin-top:0; }
+
+  .cards{ display:grid; grid-template-columns:repeat(4, 1fr); gap:20px; }
+  @media (max-width: 1100px){ .cards{ grid-template-columns:repeat(2, 1fr); } }
+  @media (max-width: 560px){ .cards{ grid-template-columns:1fr; } }
+
+  .row2{ display:grid; grid-template-columns:repeat(2, 1fr); gap:20px; }
+  @media (max-width: 700px){ .row2{ grid-template-columns:1fr; } }
+
+  .card{
+    background:var(--panel); border:1px solid var(--panel-edge); border-radius:14px;
+    box-shadow:0 1px 3px rgba(17,17,17,0.06), 0 8px 24px rgba(17,17,17,0.04);
+    padding:24px 22px 20px; display:flex; flex-direction:column; align-items:center;
+    position:relative; overflow:hidden;
+  }
+  .card .kicker{
+    align-self:flex-start; font-size:18px; letter-spacing:0.3px; text-transform:uppercase;
+    color:var(--red); margin-bottom:16px; font-weight:800;
+  }
+  .ring-wrap{ position:relative; width:160px; height:160px; margin-bottom:6px; }
+  .ring-wrap svg{ width:100%; height:100%; transform:rotate(-90deg); }
+  .ring-bg{ fill:none; stroke:var(--ring-track); stroke-width:12; }
+  .ring-fg{ fill:none; stroke-width:12; stroke-linecap:round; transition: stroke-dashoffset 0.6s ease, stroke 0.4s ease; }
+  .ring-center{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .ring-count{ font-family:'JetBrains Mono',Consolas,'Cascadia Mono','Courier New',monospace; font-size:34px; font-weight:700; line-height:1; }
+  .ring-target{ font-size:12px; color:var(--text-dim); margin-top:5px; }
+  .pct{ font-family:'JetBrains Mono',Consolas,'Cascadia Mono','Courier New',monospace; font-size:14px; font-weight:700; margin-top:12px; }
+  .label{ font-size:14px; font-weight:700; margin-top:3px; text-align:center; }
+
+  /* Simple stat card (Puncture repair -- count only, no target/ring) */
+  .simple-stat-card{ justify-content:center; min-height:222px; }
+  .simple-stat-count{
+    font-family:'JetBrains Mono',Consolas,'Cascadia Mono','Courier New',monospace;
+    font-size:64px; font-weight:800; line-height:1; color:var(--black); margin-bottom:10px;
+  }
+
+  /* Revenue cards */
+  .revenue-card{ align-items:stretch; }
+  .revenue-card .amount{ font-family:'JetBrains Mono',Consolas,'Cascadia Mono','Courier New',monospace; font-size:38px; font-weight:700; color:var(--black); align-self:flex-start; }
+  .bar-track{ height:10px; border-radius:5px; background:var(--ring-track); margin-top:16px; overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:5px; background:var(--red); transition:width 0.6s ease, background 0.4s ease; }
+  .revenue-card .pct{ align-self:flex-start; margin-top:10px; }
+  .no-target-note{ font-size:12px; color:var(--text-dim); margin-top:14px; align-self:flex-start; }
+
+  /* Cash/bank card -- per-company, per-ledger breakdown */
+  .moneyflow-card{ flex-direction:row; align-items:stretch; gap:0; padding:22px 0 18px; }
+  .money-col{ flex:1; display:flex; flex-direction:column; padding:0 22px; min-width:0; }
+  .money-col .kicker{ font-size:14px; margin-bottom:14px; }
+  .money-rows{ display:flex; flex-direction:column; gap:10px; }
+  .money-row{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .money-label{ font-size:12.5px; color:var(--text-dim); font-weight:600; line-height:1.3; }
+  .money-amt{
+    font-family:'JetBrains Mono',Consolas,'Cascadia Mono','Courier New',monospace;
+    font-size:17px; font-weight:700; color:var(--black); white-space:nowrap; flex-shrink:0;
+  }
+  .moneyflow-divider{ width:1px; align-self:stretch; background:var(--panel-edge); }
+
+  /* Item-wise sales table */
+  .table-card{ align-items:stretch; max-height:420px; }
+  .table-card .kicker{ margin-bottom:14px; }
+  .table-scroll{ overflow-y:auto; max-height:340px; width:100%; }
+  table.itemsales{ width:100%; border-collapse:collapse; font-size:14px; }
+  table.itemsales th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.4px;
+    color:var(--text-dim); padding:6px 8px; border-bottom:2px solid var(--panel-edge);
+    position:sticky; top:0; background:var(--panel);
+  }
+  table.itemsales th.qty-col, table.itemsales td.qty-col{ text-align:right; }
+  table.itemsales td{ padding:7px 8px; border-bottom:1px solid rgba(17,17,17,0.06); }
+  table.itemsales tr:hover td{ background:rgba(211,26,20,0.04); }
+  .empty-note{ font-size:13px; color:var(--text-dim); padding:18px 4px; text-align:center; }
+
+  .status-banner{
+    margin-top:22px; padding:11px 16px; border-radius:10px; font-size:13px;
+    display:none; align-items:center; gap:8px; background:rgba(211,26,20,0.08); color:var(--red);
+    border:1px solid rgba(211,26,20,0.25);
+  }
+  .status-banner.show{ display:flex; }
+  .brand-bar{ height:6px; border-radius:3px; margin-bottom:24px; background:linear-gradient(90deg, var(--red), var(--black)); }
+  .footer-note{ margin-top:26px; font-size:12px; color:var(--text-dim); text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand-bar"></div>
+  <header>
+    <h1>Today's progress <span id="dateLabel"></span></h1>
+    <div class="clock" id="clock">--:--:--</div>
+  </header>
+
+  <div class="section-label">Jobs &amp; units vs target</div>
+  <div class="cards" id="ringCards">
+    <div class="card" data-key="alignment">
+      <div class="kicker">Wheel alignment</div>
+      <div class="ring-wrap">
+        <svg viewBox="0 0 200 200">
+          <circle class="ring-bg" cx="100" cy="100" r="86"></circle>
+          <circle class="ring-fg" cx="100" cy="100" r="86" stroke="#d31a14"></circle>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-count">0</div>
+          <div class="ring-target">of 0 target</div>
+        </div>
+      </div>
+      <div class="pct">0%</div>
+      <div class="label">Jobs done today</div>
+    </div>
+
+    <div class="card" data-key="balancing">
+      <div class="kicker">Wheel balancing</div>
+      <div class="ring-wrap">
+        <svg viewBox="0 0 200 200">
+          <circle class="ring-bg" cx="100" cy="100" r="86"></circle>
+          <circle class="ring-fg" cx="100" cy="100" r="86" stroke="#d31a14"></circle>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-count">0</div>
+          <div class="ring-target">of 0 target</div>
+        </div>
+      </div>
+      <div class="pct">0%</div>
+      <div class="label">Jobs done today</div>
+    </div>
+
+    <div class="card" data-key="pcr">
+      <div class="kicker">Car/SUV tyre sales</div>
+      <div class="ring-wrap">
+        <svg viewBox="0 0 200 200">
+          <circle class="ring-bg" cx="100" cy="100" r="86"></circle>
+          <circle class="ring-fg" cx="100" cy="100" r="86" stroke="#d31a14"></circle>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-count">0</div>
+          <div class="ring-target">of 0 target</div>
+        </div>
+      </div>
+      <div class="pct">0%</div>
+      <div class="label">Units sold today</div>
+    </div>
+
+    <div class="card simple-stat-card" data-stat="puncture">
+      <div class="kicker">Puncture repair</div>
+      <div class="simple-stat-count">0</div>
+      <div class="label">Jobs done today</div>
+    </div>
+  </div>
+
+  <div class="section-label">Revenue</div>
+  <div class="row2">
+    <div class="card revenue-card" data-rev="service">
+      <div class="kicker">Service revenue</div>
+      <div class="amount">₹0</div>
+      <div class="bar-track" style="display:none;"><div class="bar-fill" style="width:0%;"></div></div>
+      <div class="pct" style="display:none;">0%</div>
+      <div class="no-target-note" style="display:none;">No daily target set</div>
+    </div>
+    <div class="card revenue-card" data-rev="tyres">
+      <div class="kicker">Tyre sales revenue</div>
+      <div class="amount">₹0</div>
+      <div class="bar-track" style="display:none;"><div class="bar-fill" style="width:0%;"></div></div>
+      <div class="pct" style="display:none;">0%</div>
+      <div class="no-target-note" style="display:none;">No daily target set</div>
+    </div>
+  </div>
+
+  <div class="section-label">Money in &amp; item-wise sales</div>
+  <div class="row2">
+    <div class="card moneyflow-card">
+      <div class="money-col">
+        <div class="kicker">Akash Auto Care</div>
+        <div class="money-rows" id="serviceMoneyRows"></div>
+      </div>
+      <div class="moneyflow-divider"></div>
+      <div class="money-col">
+        <div class="kicker">Akash Tyres</div>
+        <div class="money-rows" id="tyresMoneyRows"></div>
+      </div>
+    </div>
+
+    <div class="card table-card">
+      <div class="kicker">Tyre item-wise sales (excl. tube/flap)</div>
+      <div class="table-scroll">
+        <table class="itemsales" id="itemSalesTable">
+          <thead>
+            <tr><th>Item</th><th class="qty-col">Units</th></tr>
+          </thead>
+          <tbody id="itemSalesBody">
+            <tr><td colspan="2" class="empty-note">Waiting for first update…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-banner" id="statusBanner">Lost connection to the dashboard feed — showing last known numbers.</div>
+  <div class="footer-note" id="updatedNote">Waiting for first update…</div>
+</div>
+
+<script>
+// Your Firebase web app config (just the values -- not the full snippet
+// Firebase shows you, which uses a different import-based SDK style).
+const firebaseConfig = {
+  apiKey: "AIzaSyB3eTWvZdcb0QCgKIvr5IPOphxva_LuNpQ",
+  authDomain: "tally-dashboard-5555.firebaseapp.com",
+  projectId: "tally-dashboard-5555",
+  storageBucket: "tally-dashboard-5555.firebasestorage.app",
+  messagingSenderId: "438558408950",
+  appId: "1:438558408950:web:75995dc92ad23cb79cacd7",
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const RADIUS = 86;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+document.querySelectorAll('.ring-fg').forEach(c => {
+  c.style.strokeDasharray = CIRCUMFERENCE.toFixed(1);
+  c.style.strokeDashoffset = CIRCUMFERENCE.toFixed(1);
+});
+
+function colorFor(pct){
+  if (pct >= 100) return '#167a51';
+  if (pct >= 60) return '#c17a00';
+  return '#d31a14';
+}
+
+function fmtINR(n){
+  n = Math.round(n || 0);
+  return '₹' + n.toLocaleString('en-IN');
+}
+
+function updateRingCard(key, value, target){
+  const card = document.querySelector(`.card[data-key="${key}"]`);
+  if (!card) return;
+  const pct = target > 0 ? Math.min(999, Math.round((value / target) * 100)) : 0;
+  const ring = card.querySelector('.ring-fg');
+  const offset = CIRCUMFERENCE * (1 - Math.min(1, target > 0 ? value / target : 0));
+  ring.style.strokeDashoffset = offset.toFixed(1);
+  ring.style.stroke = colorFor(pct);
+  card.querySelector('.ring-count').textContent = value;
+  card.querySelector('.ring-target').textContent = `of ${target} target`;
+  const pctEl = card.querySelector('.pct');
+  pctEl.textContent = pct + '%';
+  pctEl.style.color = colorFor(pct);
+}
+
+function updateRevenueCard(key, value, target){
+  const card = document.querySelector(`.card[data-rev="${key}"]`);
+  if (!card) return;
+  card.querySelector('.amount').textContent = fmtINR(value);
+  const barTrack = card.querySelector('.bar-track');
+  const pctEl = card.querySelector('.pct');
+  const noTarget = card.querySelector('.no-target-note');
+  if (target > 0){
+    const pct = Math.min(999, Math.round((value / target) * 100));
+    barTrack.style.display = 'block';
+    pctEl.style.display = 'block';
+    noTarget.style.display = 'none';
+    card.querySelector('.bar-fill').style.width = Math.min(100, pct) + '%';
+    card.querySelector('.bar-fill').style.background = colorFor(pct);
+    pctEl.textContent = pct + '% of ' + fmtINR(target) + ' target';
+    pctEl.style.color = colorFor(pct);
+  } else {
+    barTrack.style.display = 'none';
+    pctEl.style.display = 'none';
+    noTarget.style.display = 'block';
+  }
+}
+
+function updateItemSalesTable(items){
+  const body = document.getElementById('itemSalesBody');
+  if (!items || items.length === 0){
+    body.innerHTML = '<tr><td colspan="2" class="empty-note">No tyre sales recorded yet today.</td></tr>';
+    return;
+  }
+  body.innerHTML = items.map(it => {
+    const qty = (it.qty % 1 === 0) ? it.qty : it.qty.toFixed(1);
+    return `<tr><td>${escapeHtml(it.name)}</td><td class="qty-col">${qty}</td></tr>`;
+  }).join('');
+}
+
+function updateSimpleStat(key, value){
+  const card = document.querySelector(`.card[data-stat="${key}"]`);
+  if (!card) return;
+  card.querySelector('.simple-stat-count').textContent = value;
+}
+
+function renderMoneyRows(containerId, cashMap, bankMap){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const rows = [];
+  for (const [name, amt] of Object.entries(cashMap || {})){
+    rows.push(`<div class="money-row"><span class="money-label">${escapeHtml(name)}</span><span class="money-amt">${fmtINR(amt)}</span></div>`);
+  }
+  for (const [name, amt] of Object.entries(bankMap || {})){
+    rows.push(`<div class="money-row"><span class="money-label">${escapeHtml(name)}</span><span class="money-amt">${fmtINR(amt)}</span></div>`);
+  }
+  el.innerHTML = rows.join('') || '<div class="empty-note">No data yet</div>';
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function setClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString();
+  document.getElementById('dateLabel').textContent = now.toLocaleDateString(undefined, { weekday:'long', month:'short', day:'numeric' });
+}
+setClock();
+setInterval(setClock, 1000);
+
+function applyData(data){
+  updateRingCard('alignment', data.alignment ?? 0, data.targets?.alignment ?? 0);
+  updateRingCard('balancing', data.balancing ?? 0, data.targets?.balancing ?? 0);
+  updateRingCard('pcr', data.pcr ?? 0, data.targets?.pcr ?? 0);
+  updateSimpleStat('puncture', data.puncture ?? 0);
+
+  updateRevenueCard('service', data.service_revenue ?? 0, data.revenue_targets?.service ?? 0);
+  updateRevenueCard('tyres', data.tyre_revenue ?? 0, data.revenue_targets?.tyres ?? 0);
+
+  renderMoneyRows('serviceMoneyRows', data.money?.service?.cash, data.money?.service?.bank);
+  renderMoneyRows('tyresMoneyRows', data.money?.tyres?.cash, data.money?.tyres?.bank);
+
+  updateItemSalesTable(data.item_sales ?? []);
+
+  const banner = document.getElementById('statusBanner');
+  if (data.status === 'error'){
+    banner.classList.add('show');
+    banner.textContent = 'Tally feed error — showing last known numbers (' + (data.error || 'unknown error') + ')';
+  } else {
+    banner.classList.remove('show');
+  }
+  const updated = data.last_updated ? new Date(data.last_updated).toLocaleTimeString() : '—';
+  document.getElementById('updatedNote').textContent = `Last updated ${updated} · live`;
+}
+
+// Real-time listener: fires instantly whenever the Python script on the
+// SHOP PC pushes a new poll to Firestore -- no fixed refresh interval
+// needed, and no extra reads while nothing has changed.
+db.collection('dashboard').doc('today').onSnapshot(
+  (doc) => {
+    if (doc.exists){
+      applyData(doc.data());
+    } else {
+      document.getElementById('statusBanner').classList.add('show');
+      document.getElementById('statusBanner').textContent = 'No data yet — waiting for the first push from the SHOP PC.';
+    }
+  },
+  (error) => {
+    document.getElementById('statusBanner').classList.add('show');
+    document.getElementById('statusBanner').textContent = 'Could not reach Firestore — check your internet connection.';
+    console.error(error);
+  }
+);
+</script>
+</body>
+</html>
