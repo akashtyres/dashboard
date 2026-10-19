@@ -120,6 +120,11 @@
   table.itemsales th.qty-col, table.itemsales td.qty-col{ text-align:right; }
   table.itemsales td{ padding:7px 8px; border-bottom:1px solid rgba(17,17,17,0.06); }
   table.itemsales tr:hover td{ background:rgba(211,26,20,0.04); }
+  .table-total{
+    display:flex; justify-content:space-between; width:100%;
+    padding:10px 8px 0; margin-top:6px; border-top:2px solid var(--panel-edge);
+    font-size:14px; font-weight:700;
+  }
   .empty-note{ font-size:13px; color:var(--text-dim); padding:18px 4px; text-align:center; }
 
   .status-banner{
@@ -346,6 +351,39 @@
     </div>
   </div>
 
+  <div class="section-label">PCR &amp; MC-H / Scooter EV item-wise sales</div>
+  <div class="row2">
+    <div class="card table-card">
+      <div class="kicker">PCR item-wise sales</div>
+      <div class="table-scroll">
+        <table class="itemsales">
+          <thead>
+            <tr><th>Item</th><th class="qty-col">Units</th></tr>
+          </thead>
+          <tbody id="pcrItemsBody">
+            <tr><td colspan="2" class="empty-note">Waiting for first update…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-total"><span>Total</span><span id="pcrItemsTotal">0</span></div>
+    </div>
+
+    <div class="card table-card">
+      <div class="kicker">MC-H &amp; Scooter EV item-wise sales</div>
+      <div class="table-scroll">
+        <table class="itemsales">
+          <thead>
+            <tr><th>Item</th><th class="qty-col">Units</th></tr>
+          </thead>
+          <tbody id="mchEvItemsBody">
+            <tr><td colspan="2" class="empty-note">Waiting for first update…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-total"><span>Total</span><span id="mchEvItemsTotal">0</span></div>
+    </div>
+  </div>
+
   <button class="daybook-toggle" id="daybookToggle">
     <span>View Day Book &amp; Ledger Entries</span>
     <span class="chev">▾</span>
@@ -399,6 +437,31 @@ function updateItemSalesTable(items){
   }).join('');
 }
 
+function fmtQty(q){
+  return (q % 1 === 0) ? String(q) : q.toFixed(1);
+}
+
+// Item name + quantity table with a total line. `items` is null when the
+// saved record(s) predate this section (no item list stored for that day).
+function updateQtyTable(bodyId, totalId, items, emptyMsg){
+  const body = document.getElementById(bodyId);
+  const totalEl = document.getElementById(totalId);
+  if (items === null){
+    body.innerHTML = '<tr><td colspan="2" class="empty-note">Item list not saved for this date yet — run the backfill to fill it in.</td></tr>';
+    totalEl.textContent = '–';
+    return;
+  }
+  if (!items || items.length === 0){
+    body.innerHTML = `<tr><td colspan="2" class="empty-note">${escapeHtml(emptyMsg)}</td></tr>`;
+    totalEl.textContent = '0';
+    return;
+  }
+  body.innerHTML = items.map(it =>
+    `<tr><td>${escapeHtml(it.name)}</td><td class="qty-col">${fmtQty(it.qty)}</td></tr>`
+  ).join('');
+  totalEl.textContent = fmtQty(items.reduce((sum, it) => sum + (it.qty || 0), 0));
+}
+
 function updateSimpleStat(key, value){
   const card = document.querySelector(`.card[data-stat="${key}"]`);
   if (!card) return;
@@ -438,6 +501,8 @@ function applyData(data){
   renderMoneyRows('tyresMoneyRows', data.money?.tyres?.cash, data.money?.tyres?.bank);
 
   updateItemSalesTable(data.item_sales ?? []);
+  updateQtyTable('pcrItemsBody', 'pcrItemsTotal', data.pcr_items ?? null, 'No PCR sales recorded for this period.');
+  updateQtyTable('mchEvItemsBody', 'mchEvItemsTotal', data.mch_ev_items ?? null, 'No MC-H / Scooter EV sales recorded for this period.');
 
   const banner = document.getElementById('statusBanner');
   if (data.status === 'error'){
@@ -522,10 +587,14 @@ function mergeKpiDocs(docs){
     alignment: 0, balancing: 0, pcr: 0, puncture: 0,
     service_revenue: 0, tyre_revenue: 0,
     item_sales: [],
+    pcr_items: [], mch_ev_items: [],
     money: { service: { cash: {}, bank: {} }, tyres: { cash: {}, bank: {} } },
     status: 'ok', error: null,
   };
   const itemTotals = {};
+  const pcrTotals = {};
+  const mchEvTotals = {};
+  let anyPcrList = false, anyMchEvList = false;
   for (const d of docs){
     merged.alignment += d.alignment ?? 0;
     merged.balancing += d.balancing ?? 0;
@@ -536,10 +605,28 @@ function mergeKpiDocs(docs){
     for (const it of (d.item_sales ?? [])){
       itemTotals[it.name] = (itemTotals[it.name] || 0) + it.qty;
     }
+    if (Array.isArray(d.pcr_items)){
+      anyPcrList = true;
+      for (const it of d.pcr_items){
+        pcrTotals[it.name] = (pcrTotals[it.name] || 0) + it.qty;
+      }
+    }
+    if (Array.isArray(d.mch_ev_items)){
+      anyMchEvList = true;
+      for (const it of d.mch_ev_items){
+        mchEvTotals[it.name] = (mchEvTotals[it.name] || 0) + it.qty;
+      }
+    }
   }
   merged.item_sales = Object.entries(itemTotals)
     .map(([name, qty]) => ({ name, qty }))
     .sort((a, b) => b.qty - a.qty);
+  const toSortedList = (totals) => Object.entries(totals)
+    .map(([name, qty]) => ({ name, qty }))
+    .sort((a, b) => b.qty - a.qty);
+  // null = days exist but none has the item list saved yet (needs backfill)
+  merged.pcr_items = (docs.length > 0 && !anyPcrList) ? null : toSortedList(pcrTotals);
+  merged.mch_ev_items = (docs.length > 0 && !anyMchEvList) ? null : toSortedList(mchEvTotals);
   merged.money.service.cash = mergeLedgerMaps(docs.map(d => d.money?.service?.cash));
   merged.money.service.bank = mergeLedgerMaps(docs.map(d => d.money?.service?.bank));
   merged.money.tyres.cash = mergeLedgerMaps(docs.map(d => d.money?.tyres?.cash));
