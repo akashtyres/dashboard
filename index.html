@@ -261,8 +261,9 @@
   .rec-card{ background:var(--panel); border:1px solid var(--panel-edge); border-radius:12px; overflow:hidden; }
   .rec-scroll{ overflow:auto; max-height:560px; }
   table.rec{ width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px; }
+  table.rec thead{ position:sticky; top:0; z-index:2; }
   table.rec th{
-    position:sticky; top:0; background:var(--panel); z-index:1; text-align:right; font-size:11px; text-transform:uppercase;
+    background:var(--panel); text-align:right; font-size:11px; text-transform:uppercase;
     letter-spacing:0.4px; color:var(--text-dim); padding:10px 10px; border-bottom:2px solid var(--panel-edge); white-space:nowrap;
   }
   table.rec th:first-child, table.rec td:first-child{ text-align:left; }
@@ -271,7 +272,12 @@
   table.rec td.zero{ color:#bdb4a8; }
   table.rec td.bal{ font-weight:700; }
   table.rec td.old{ color:var(--red); font-weight:700; }
-  table.rec tr.totalrow td{ font-weight:800; background:rgba(17,17,17,0.04); position:sticky; top:35px; }
+  table.rec thead tr.totalrow th{
+    font-weight:800; font-size:13.5px; text-transform:none; letter-spacing:0; color:var(--black);
+    background:#f1eeea; border-bottom:2px solid var(--panel-edge); font-family:'JetBrains Mono',monospace;
+  }
+  table.rec thead tr.totalrow th:first-child{ font-family:'Inter',sans-serif; }
+  table.rec thead tr.totalrow th.old{ color:var(--red); }
   table.rec tbody tr:hover td{ background:rgba(211,26,20,0.04); }
   .rec-grp{ font-size:11px; color:var(--text-dim); font-weight:500; }
   .adv-toggle{ margin-top:10px; font-size:13px; }
@@ -290,6 +296,18 @@
   .tg-body{ padding:6px 10px 6px; border-top:1px solid var(--panel-edge); background:var(--bg); }
   .tg-body .voucher-row{ margin-bottom:6px; }
   @media (max-width: 700px){ .tab-btn{ padding:10px 14px; font-size:13px; } }
+
+  /* Ledger statement */
+  table.rec tbody tr[data-id]{ cursor:pointer; }
+  .stmt-bar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:6px 0 14px; }
+  .stmt-title{ font-size:20px; font-weight:800; color:var(--black); margin:4px 2px 2px; }
+  .stmt-sub{ font-size:13px; color:var(--text-dim); margin:0 2px 14px; }
+  table.rec.stmt{ min-width:820px; }
+  table.rec.stmt th.l, table.rec.stmt td.l{ text-align:left; }
+  table.rec.stmt td.l{ font-family:'Inter',sans-serif; font-weight:500; white-space:normal; min-width:90px; }
+  table.rec.stmt td.narr{ color:var(--text-dim); font-size:12px; max-width:260px; }
+  table.rec.stmt tr.openrow td, table.rec.stmt tr.closerow td{ font-weight:800; background:rgba(17,17,17,0.04); }
+  table.rec.stmt tr.totrow td{ font-weight:700; border-top:2px solid var(--panel-edge); }
 </style>
 </head>
 <body>
@@ -415,6 +433,23 @@
     </div>
   </div>
 
+  <div class="section-label">PCR &amp; MC-H / Scooter EV item-wise sales <span class="asof">· Akash Tyres, units</span></div>
+  <div class="row2">
+    <div class="card table-card">
+      <div class="kicker">PCR item-wise sales</div>
+      <div class="table-scroll">
+        <table class="itemsales"><thead><tr><th>Item</th><th class="qty-col">Units</th></tr></thead>
+          <tbody id="pcrItemsBody"><tr><td colspan="2" class="empty-note">Waiting for first update…</td></tr></tbody></table>
+      </div>
+    </div>
+    <div class="card table-card">
+      <div class="kicker">MC-H &amp; Scooter EV item-wise sales</div>
+      <div class="table-scroll">
+        <table class="itemsales"><thead><tr><th>Item</th><th class="qty-col">Units</th></tr></thead>
+          <tbody id="mchItemsBody"><tr><td colspan="2" class="empty-note">Waiting for first update…</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
   </div><!-- /tabDashboard -->
 
   <div id="tabDaybook" style="display:none;">
@@ -423,11 +458,28 @@
   </div>
 
   <div id="tabReceivables" style="display:none;">
-    <div class="rec-tools">
-      <input type="search" class="rec-search" id="recSearch" placeholder="Search party name…">
-      <span class="rec-sum" id="recAsOf"></span>
+    <div id="recMain">
+      <div class="rec-tools">
+        <input type="search" class="rec-search" id="recSearch" placeholder="Search party name…">
+        <span class="rec-sum" id="recAsOf"></span>
+      </div>
+      <div id="recContent"><div class="daybook-loading">Loading receivables…</div></div>
     </div>
-    <div id="recContent"><div class="daybook-loading">Loading receivables…</div></div>
+    <div id="recStatement" style="display:none;">
+      <div class="stmt-bar">
+        <button class="ctrl-btn" id="stmtBack">← Back to receivables</button>
+        <div class="ctrl-range">
+          <input type="date" class="ctrl-date-input" id="stmtFrom">
+          <span>to</span>
+          <input type="date" class="ctrl-date-input" id="stmtTo">
+          <button class="ctrl-btn" id="stmtApply">Apply</button>
+        </div>
+        <button class="ctrl-btn active" id="stmtPdf">Download PDF</button>
+      </div>
+      <div class="stmt-title" id="stmtTitle"></div>
+      <div class="stmt-sub" id="stmtSub"></div>
+      <div id="stmtBody"><div class="daybook-loading">Loading statement…</div></div>
+    </div>
   </div>
 
   <div class="status-banner" id="statusBanner">Lost connection to the dashboard feed — showing last known numbers.</div>
@@ -460,6 +512,18 @@ function escapeHtml(s){
   const d = document.createElement('div');
   d.textContent = s ?? '';
   return d.innerHTML;
+}
+
+function fillItemTable(bodyId, items){
+  const body = document.getElementById(bodyId);
+  if (!items || items.length === 0){
+    body.innerHTML = '<tr><td colspan="2" class="empty-note">No sales recorded for this period.</td></tr>';
+    return;
+  }
+  body.innerHTML = items.map(it => {
+    const qty = (it.qty % 1 === 0) ? it.qty : it.qty.toFixed(1);
+    return `<tr><td>${escapeHtml(it.name)}</td><td class="qty-col">${qty}</td></tr>`;
+  }).join('');
 }
 
 function updateItemSalesTable(items){
@@ -512,6 +576,8 @@ function applyData(data){
   renderCashBook();
 
   updateItemSalesTable(data.item_sales ?? []);
+  fillItemTable('pcrItemsBody', data.pcr_items ?? []);
+  fillItemTable('mchItemsBody', data.mch_ev_items ?? []);
 
   const banner = document.getElementById('statusBanner');
   if (data.status === 'error'){
@@ -595,12 +661,14 @@ function mergeKpiDocs(docs){
   const merged = {
     alignment: 0, balancing: 0, pcr: 0, puncture: 0,
     service_revenue: 0, tyre_revenue: 0,
-    item_sales: [],
+    item_sales: [], pcr_items: [], mch_ev_items: [],
     money: { service: { cash: {}, bank: {} }, tyres: { cash: {}, bank: {} } },
     status: 'ok', error: null,
   };
-  const itemTotals = {};
+  const itemTotals = {}, pcrTotals = {}, mchTotals = {};
   for (const d of docs){
+    for (const it of (d.pcr_items ?? [])) pcrTotals[it.name] = (pcrTotals[it.name] || 0) + it.qty;
+    for (const it of (d.mch_ev_items ?? [])) mchTotals[it.name] = (mchTotals[it.name] || 0) + it.qty;
     merged.alignment += d.alignment ?? 0;
     merged.balancing += d.balancing ?? 0;
     merged.pcr += d.pcr ?? 0;
@@ -614,6 +682,9 @@ function mergeKpiDocs(docs){
   merged.item_sales = Object.entries(itemTotals)
     .map(([name, qty]) => ({ name, qty }))
     .sort((a, b) => b.qty - a.qty);
+  const toList = (o) => Object.entries(o).map(([name, qty]) => ({ name, qty })).sort((a, b) => b.qty - a.qty);
+  merged.pcr_items = toList(pcrTotals);
+  merged.mch_ev_items = toList(mchTotals);
   merged.money.service.cash = mergeLedgerMaps(docs.map(d => d.money?.service?.cash));
   merged.money.service.bank = mergeLedgerMaps(docs.map(d => d.money?.service?.bank));
   merged.money.tyres.cash = mergeLedgerMaps(docs.map(d => d.money?.tyres?.cash));
@@ -794,7 +865,7 @@ function voucherValue(v){
   // equals the voucher value because every voucher balances).
   const t = Number(v.total || 0);
   if (t > 0.004) return t;
-  return (v.ledgers || []).reduce((a, l) => a + (Number(l.amount) > 0 ? Number(l.amount) : 0), 0);
+  return (v.ledgers || []).reduce((a, l) => a + (Number(l.amount) < 0 ? -Number(l.amount) : 0), 0);
 }
 
 function renderVoucherRow(v){
@@ -815,6 +886,8 @@ function renderVoucherRow(v){
         <span class="v-total">${fmtINR(voucherValue(v))}</span>
       </summary>
       <div class="voucher-detail">
+        ${v.optional ? '<div class="voucher-detail-title">Optional voucher (not posted to books)</div>' : ''}
+        ${v.narration ? `<div class="voucher-detail-title">Narration</div><div style="font-size:13px">${escapeHtml(v.narration)}</div>` : ''}
         ${itemsRows ? `<div class="voucher-detail-title">Items</div>
         <table class="detail-table">
           <thead><tr><td><b>Item</b></td><td class="num"><b>Qty</b></td><td class="num"><b>Amount</b></td></tr></thead>
@@ -915,13 +988,18 @@ function recCell(n, extraClass){
   return `<td class="${extraClass || ''}">${Math.round(v).toLocaleString('en-IN')}</td>`;
 }
 
+function recTotCell(n, cls){
+  const v = Math.round(Number(n || 0));
+  return `<th class="${cls || ''}">${v === 0 ? '–' : v.toLocaleString('en-IN')}</th>`;
+}
+
 function renderRecSection(title, doc, q){
   if (!doc) return `<div class="rec-head"><span class="rec-title">${title}</span></div><div class="daybook-empty">No receivables data yet — it appears after the next sync on the SHOP PC.</div>`;
   if (doc.error) return `<div class="rec-head"><span class="rec-title">${title}</span></div><div class="daybook-empty">No permission to read — update Firestore rules.</div>`;
   const t = doc.totals || {};
   const rows = (doc.rows || []).filter(r => !q || r.n.toLowerCase().includes(q));
   const body = rows.map(r => `
-    <tr data-ledger="${escapeHtml(r.n)}">
+    <tr${r.id ? ` data-id="${r.id}"` : ''}>
       <td>${escapeHtml(r.n)}${r.g && r.g !== 'Sundry Debtors' ? `<div class="rec-grp">${escapeHtml(r.g)}</div>` : ''}</td>
       ${recCell(r.bal, 'bal')}${recCell(r.b1)}${recCell(r.b2)}${recCell(r.b3)}${recCell(r.b4, 'old')}
     </tr>`).join('');
@@ -929,7 +1007,7 @@ function renderRecSection(title, doc, q){
   const advHtml = adv.length ? `
     <details class="adv-toggle"><summary>Advances / credit balances — ${adv.length} part${adv.length === 1 ? 'y' : 'ies'}, ₹${Math.round(adv.reduce((a, x) => a + x.adv, 0)).toLocaleString('en-IN')}</summary>
       <div class="rec-card"><table class="rec"><thead><tr><th>Party</th><th>Advance (Cr)</th></tr></thead><tbody>
-        ${adv.map(a => `<tr><td>${escapeHtml(a.n)}</td><td>${Math.round(a.adv).toLocaleString('en-IN')}</td></tr>`).join('')}
+        ${adv.map(a => `<tr${a.id ? ` data-id="${a.id}"` : ''}><td>${escapeHtml(a.n)}</td><td>${Math.round(a.adv).toLocaleString('en-IN')}</td></tr>`).join('')}
       </tbody></table></div>
     </details>` : '';
   return `
@@ -938,9 +1016,11 @@ function renderRecSection(title, doc, q){
       <span class="rec-sum">Outstanding <b>${fmtINR(t.bal)}</b> · ${(doc.rows || []).length} parties</span>
     </div>
     <div class="rec-card"><div class="rec-scroll"><table class="rec">
-      <thead><tr><th>Party</th><th>Ledger balance</th><th>0–30 days</th><th>31–60 days</th><th>61–90 days</th><th>90+ days</th></tr></thead>
+      <thead>
+        <tr><th>Party</th><th>Ledger balance</th><th>0–30 days</th><th>31–60 days</th><th>61–90 days</th><th>90+ days</th></tr>
+        <tr class="totalrow"><th>Total</th>${recTotCell(t.bal)}${recTotCell(t.b1)}${recTotCell(t.b2)}${recTotCell(t.b3)}${recTotCell(t.b4, 'old')}</tr>
+      </thead>
       <tbody>
-        <tr class="totalrow"><td>Total</td>${recCell(t.bal)}${recCell(t.b1)}${recCell(t.b2)}${recCell(t.b3)}${recCell(t.b4)}</tr>
         ${body || '<tr><td colspan="6" class="empty-note">No matching parties.</td></tr>'}
       </tbody></table></div></div>
     ${advHtml}`;
@@ -957,6 +1037,164 @@ function renderReceivables(){
     : '';
 }
 document.getElementById('recSearch').addEventListener('input', renderReceivables);
+
+
+// ---------------------------------------------------------------------
+// Ledger statement (current FY, From/To, PDF)
+// ---------------------------------------------------------------------
+let stmtDoc = null;
+let stmtRange = { from: '', to: '' };
+
+function fmtMoney(n){
+  return (Math.round(n * 100) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtDrCr(n){
+  if (Math.abs(n) < 0.005) return '0.00';
+  return fmtMoney(Math.abs(n)) + (n > 0 ? ' Dr' : ' Cr');
+}
+function dmy(key){ return key.slice(6, 8) + '-' + key.slice(4, 6) + '-' + key.slice(0, 4); }
+
+function buildStatement(doc, fromIso, toIso){
+  const f = fromIso.replace(/-/g, ''), t = toIso.replace(/-/g, '');
+  let opening = Number(doc.opening || 0);
+  const rows = [];
+  for (const e of (doc.entries || [])){
+    if (e[0] < f) opening += Number(e[5]) - Number(e[6]);
+    else if (e[0] <= t) rows.push(e);
+  }
+  let run = opening, dr = 0, cr = 0;
+  const lines = rows.map(e => {
+    run += Number(e[5]) - Number(e[6]);
+    dr += Number(e[5]); cr += Number(e[6]);
+    return { date: e[0], type: e[1], no: e[2], counter: e[3], narr: e[4], dr: Number(e[5]), cr: Number(e[6]), bal: run };
+  });
+  return { opening, lines, dr, cr, closing: run };
+}
+
+function renderStatement(){
+  if (!stmtDoc) return;
+  const st = buildStatement(stmtDoc, stmtRange.from, stmtRange.to);
+  document.getElementById('stmtTitle').textContent = stmtDoc.n;
+  document.getElementById('stmtSub').textContent =
+    stmtDoc.company + ' · ' + dmy(stmtRange.from.replace(/-/g, '')) + ' to ' + dmy(stmtRange.to.replace(/-/g, '')) +
+    ' · financial year from ' + dmy(stmtDoc.fy.replace(/-/g, ''));
+  const body = st.lines.map(l => `
+    <tr>
+      <td class="l">${dmy(l.date)}</td><td class="l">${escapeHtml(l.counter)}</td><td class="l">${escapeHtml(l.type)}</td>
+      <td class="l">${escapeHtml(l.no)}</td><td class="l narr">${escapeHtml(l.narr)}</td>
+      <td>${l.dr ? fmtMoney(l.dr) : ''}</td><td>${l.cr ? fmtMoney(l.cr) : ''}</td><td class="bal">${fmtDrCr(l.bal)}</td>
+    </tr>`).join('');
+  document.getElementById('stmtBody').innerHTML = `
+    <div class="rec-card"><div class="rec-scroll"><table class="rec stmt">
+      <thead><tr><th class="l">Date</th><th class="l">Particulars</th><th class="l">Type</th><th class="l">Vch no.</th><th class="l">Narration</th>
+        <th>Debit</th><th>Credit</th><th>Balance</th></tr></thead>
+      <tbody>
+        <tr class="openrow"><td class="l" colspan="5">Opening balance</td><td></td><td></td><td>${fmtDrCr(st.opening)}</td></tr>
+        ${body || '<tr><td colspan="8" class="empty-note">No entries in this period.</td></tr>'}
+        <tr class="totrow"><td class="l" colspan="5">Total</td><td>${fmtMoney(st.dr)}</td><td>${fmtMoney(st.cr)}</td><td></td></tr>
+        <tr class="closerow"><td class="l" colspan="5">Closing balance</td><td></td><td></td><td>${fmtDrCr(st.closing)}</td></tr>
+      </tbody></table></div></div>`;
+}
+
+async function openStatement(id){
+  document.getElementById('recMain').style.display = 'none';
+  document.getElementById('recStatement').style.display = 'block';
+  document.getElementById('stmtTitle').textContent = '';
+  document.getElementById('stmtSub').textContent = '';
+  document.getElementById('stmtBody').innerHTML = '<div class="daybook-loading">Loading statement…</div>';
+  window.scrollTo(0, 0);
+  try{
+    const snap = await db.collection('ledger_statements').doc(id).get();
+    if (!snap.exists){
+      document.getElementById('stmtBody').innerHTML = '<div class="daybook-empty">Statement not available yet — it is created at the next sync on the SHOP PC.</div>';
+      return;
+    }
+    stmtDoc = snap.data();
+    stmtRange = { from: stmtDoc.fy, to: todayISO() };
+    const fi = document.getElementById('stmtFrom'), ti = document.getElementById('stmtTo');
+    fi.min = ti.min = stmtDoc.fy; fi.max = ti.max = todayISO();
+    fi.value = stmtRange.from; ti.value = stmtRange.to;
+    renderStatement();
+  } catch (e){
+    console.error(e);
+    document.getElementById('stmtBody').innerHTML = '<div class="daybook-empty">Could not load the statement (check Firestore rules).</div>';
+  }
+}
+
+function closeStatement(){
+  document.getElementById('recStatement').style.display = 'none';
+  document.getElementById('recMain').style.display = 'block';
+  stmtDoc = null;
+}
+
+document.getElementById('recContent').addEventListener('click', (ev) => {
+  const tr = ev.target.closest('tr[data-id]');
+  if (tr) openStatement(tr.dataset.id);
+});
+document.getElementById('stmtBack').addEventListener('click', closeStatement);
+document.getElementById('stmtApply').addEventListener('click', () => {
+  const f = document.getElementById('stmtFrom').value, t = document.getElementById('stmtTo').value;
+  if (!f || !t){ alert('Pick both a From and To date.'); return; }
+  if (t < f){ alert('To date must be on or after the From date.'); return; }
+  stmtRange = { from: f < stmtDoc.fy ? stmtDoc.fy : f, to: t };
+  renderStatement();
+});
+
+function loadScriptOnce(src){
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    const el = document.createElement('script');
+    el.src = src; el.onload = resolve; el.onerror = () => reject(new Error('Could not load ' + src));
+    document.head.appendChild(el);
+  });
+}
+
+document.getElementById('stmtPdf').addEventListener('click', async () => {
+  if (!stmtDoc) return;
+  const btn = document.getElementById('stmtPdf');
+  btn.disabled = true; btn.textContent = 'Preparing…';
+  try{
+    await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+    const { jsPDF } = window.jspdf;
+    const st = buildStatement(stmtDoc, stmtRange.from, stmtRange.to);
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const ascii = (x) => String(x || '').replace(/[^\x20-\x7E]/g, '');
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(15);
+    pdf.text(ascii(stmtDoc.company), 40, 40);
+    pdf.setFontSize(13); pdf.text('Statement of Account: ' + ascii(stmtDoc.n), 40, 60);
+    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10);
+    pdf.text('Period: ' + dmy(stmtRange.from.replace(/-/g, '')) + ' to ' + dmy(stmtRange.to.replace(/-/g, '')) +
+             '   |   Amounts in Rs.   |   Generated ' + new Date().toLocaleString(), 40, 78);
+    const rows = [['', 'Opening balance', '', '', '', '', '', fmtDrCr(st.opening)]];
+    for (const l of st.lines){
+      rows.push([dmy(l.date), ascii(l.counter), ascii(l.type), ascii(l.no), ascii(l.narr),
+                 l.dr ? fmtMoney(l.dr) : '', l.cr ? fmtMoney(l.cr) : '', fmtDrCr(l.bal)]);
+    }
+    rows.push(['', 'Total', '', '', '', fmtMoney(st.dr), fmtMoney(st.cr), '']);
+    rows.push(['', 'Closing balance', '', '', '', '', '', fmtDrCr(st.closing)]);
+    pdf.autoTable({
+      startY: 92,
+      head: [['Date', 'Particulars', 'Type', 'Vch no.', 'Narration', 'Debit (Rs.)', 'Credit (Rs.)', 'Balance (Rs.)']],
+      body: rows,
+      styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak' },
+      headStyles: { fillColor: [211, 26, 20] },
+      columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 }, 2: { cellWidth: 80 }, 3: { cellWidth: 70 },
+                      4: { cellWidth: 190 }, 5: { halign: 'right', cellWidth: 70 }, 6: { halign: 'right', cellWidth: 70 },
+                      7: { halign: 'right', cellWidth: 80 } },
+      didParseCell: (d) => {
+        if (d.section === 'body' && (d.row.index === 0 || d.row.index >= rows.length - 2)) d.cell.styles.fontStyle = 'bold';
+      },
+    });
+    const safe = ascii(stmtDoc.n).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'ledger';
+    pdf.save(`Statement_${safe}_${stmtRange.from}_to_${stmtRange.to}.pdf`);
+  } catch (e){
+    console.error(e);
+    alert('Could not create the PDF: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Download PDF';
+  }
+});
 
 // ---------------------------------------------------------------------
 // Tabs
