@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Akash Auto Care — Today's progress</title>
+<title>Akash Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -120,11 +120,6 @@
   table.itemsales th.qty-col, table.itemsales td.qty-col{ text-align:right; }
   table.itemsales td{ padding:7px 8px; border-bottom:1px solid rgba(17,17,17,0.06); }
   table.itemsales tr:hover td{ background:rgba(211,26,20,0.04); }
-  .table-total{
-    display:flex; justify-content:space-between; width:100%;
-    padding:10px 8px 0; margin-top:6px; border-top:2px solid var(--panel-edge);
-    font-size:14px; font-weight:700;
-  }
   .empty-note{ font-size:13px; color:var(--text-dim); padding:18px 4px; text-align:center; }
 
   .status-banner{
@@ -235,6 +230,66 @@
     .v-type{ display:none; }
     .v-date{ width:54px; }
   }
+
+  /* Tabs */
+  .tab-bar{ display:flex; gap:6px; margin-bottom:14px; border-bottom:2px solid var(--panel-edge); overflow-x:auto; }
+  .tab-btn{
+    padding:11px 20px; border:none; background:none; cursor:pointer; font-family:'Inter',sans-serif;
+    font-size:14px; font-weight:700; color:var(--text-dim); border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap;
+  }
+  .tab-btn:hover{ color:var(--text); }
+  .tab-btn.active{ color:var(--red); border-bottom-color:var(--red); }
+  body[data-tab="Receivables"] #statusBanner, body[data-tab="Receivables"] #updatedNote,
+  body[data-tab="Daybook"] #statusBanner, body[data-tab="Daybook"] #updatedNote{ display:none !important; }
+  .asof{ text-transform:none; letter-spacing:0; font-weight:500; margin-left:6px; }
+
+  /* Cash / bank book */
+  .money-row.total{ border-top:1px solid var(--panel-edge); padding-top:9px; margin-top:2px; }
+  .money-row.total .money-label{ color:var(--text); font-weight:800; }
+  .money-sub{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:var(--text-dim); margin:6px 0 -2px; }
+  .money-amt .drcr{ font-size:11px; font-weight:600; color:var(--text-dim); margin-left:3px; }
+  .money-amt.cr{ color:var(--red); }
+
+  /* Receivables */
+  .rec-head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 18px; margin:26px 2px 10px; }
+  .rec-head:first-of-type{ margin-top:6px; }
+  .rec-title{ font-size:15px; font-weight:800; text-transform:uppercase; letter-spacing:0.4px; color:var(--red); }
+  .rec-sum{ font-size:13px; color:var(--text-dim); }
+  .rec-sum b{ color:var(--black); font-family:'JetBrains Mono',monospace; }
+  .rec-tools{ display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+  .rec-search{ padding:9px 12px; border:1px solid var(--panel-edge); border-radius:9px; font-family:'Inter',sans-serif; font-size:14px; background:var(--panel); min-width:240px; }
+  .rec-card{ background:var(--panel); border:1px solid var(--panel-edge); border-radius:12px; overflow:hidden; }
+  .rec-scroll{ overflow:auto; max-height:560px; }
+  table.rec{ width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px; }
+  table.rec th{
+    position:sticky; top:0; background:var(--panel); z-index:1; text-align:right; font-size:11px; text-transform:uppercase;
+    letter-spacing:0.4px; color:var(--text-dim); padding:10px 10px; border-bottom:2px solid var(--panel-edge); white-space:nowrap;
+  }
+  table.rec th:first-child, table.rec td:first-child{ text-align:left; }
+  table.rec td{ padding:8px 10px; border-bottom:1px solid rgba(17,17,17,0.06); text-align:right; font-family:'JetBrains Mono',monospace; white-space:nowrap; }
+  table.rec td:first-child{ font-family:'Inter',sans-serif; font-weight:600; white-space:normal; min-width:180px; }
+  table.rec td.zero{ color:#bdb4a8; }
+  table.rec td.bal{ font-weight:700; }
+  table.rec td.old{ color:var(--red); font-weight:700; }
+  table.rec tr.totalrow td{ font-weight:800; background:rgba(17,17,17,0.04); position:sticky; top:35px; }
+  table.rec tbody tr:hover td{ background:rgba(211,26,20,0.04); }
+  .rec-grp{ font-size:11px; color:var(--text-dim); font-weight:500; }
+  .adv-toggle{ margin-top:10px; font-size:13px; }
+  .adv-toggle summary{ cursor:pointer; font-weight:700; color:var(--text-dim); padding:8px 2px; }
+
+  /* Day Book grouped by voucher type */
+  details.type-group{ background:var(--panel); border:1px solid var(--panel-edge); border-radius:12px; margin-bottom:10px; overflow:hidden; }
+  details.type-group > summary{
+    list-style:none; cursor:pointer; padding:14px 16px; display:flex; align-items:center; gap:12px; font-weight:700; font-size:14px;
+  }
+  details.type-group > summary::-webkit-details-marker{ display:none; }
+  details.type-group > summary:hover{ background:rgba(211,26,20,0.03); }
+  .tg-name{ flex:1; }
+  .tg-count{ font-size:12px; color:var(--text-dim); font-weight:600; }
+  .tg-total{ font-family:'JetBrains Mono',monospace; font-weight:800; }
+  .tg-body{ padding:6px 10px 6px; border-top:1px solid var(--panel-edge); background:var(--bg); }
+  .tg-body .voucher-row{ margin-bottom:6px; }
+  @media (max-width: 700px){ .tab-btn{ padding:10px 14px; font-size:13px; } }
 </style>
 </head>
 <body>
@@ -266,6 +321,13 @@
     <div class="clock" id="clock">--:--:--</div>
   </header>
 
+  <div class="tab-bar" id="tabBar">
+    <button class="tab-btn active" data-tab="Dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="Daybook">Day Book</button>
+    <button class="tab-btn" data-tab="Receivables">Receivables</button>
+  </div>
+
+  <div id="dateBar">
   <div class="controls-bar">
     <button class="ctrl-btn active" id="btnToday">Today</button>
     <div class="ctrl-divider"></div>
@@ -282,7 +344,9 @@
     <span class="logout-link" id="logoutLink">Log out</span>
   </div>
   <div class="view-label" id="viewLabel"><span class="live-dot"></span> Showing: Today (live)</div>
+  </div>
 
+  <div id="tabDashboard">
   <div class="section-label">Jobs &amp; units</div>
   <div class="cards" id="ringCards">
     <div class="card simple-stat-card" data-stat="alignment">
@@ -322,7 +386,7 @@
     </div>
   </div>
 
-  <div class="section-label">Money in &amp; item-wise sales</div>
+  <div class="section-label">Cash &amp; bank balances<span class="asof" id="cashAsOn"></span></div>
   <div class="row2">
     <div class="card moneyflow-card">
       <div class="money-col">
@@ -351,46 +415,19 @@
     </div>
   </div>
 
-  <div class="section-label">PCR &amp; MC-H / Scooter EV item-wise sales</div>
-  <div class="row2">
-    <div class="card table-card">
-      <div class="kicker">PCR item-wise sales</div>
-      <div class="table-scroll">
-        <table class="itemsales">
-          <thead>
-            <tr><th>Item</th><th class="qty-col">Units</th></tr>
-          </thead>
-          <tbody id="pcrItemsBody">
-            <tr><td colspan="2" class="empty-note">Waiting for first update…</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="table-total"><span>Total</span><span id="pcrItemsTotal">0</span></div>
-    </div>
+  </div><!-- /tabDashboard -->
 
-    <div class="card table-card">
-      <div class="kicker">MC-H &amp; Scooter EV item-wise sales</div>
-      <div class="table-scroll">
-        <table class="itemsales">
-          <thead>
-            <tr><th>Item</th><th class="qty-col">Units</th></tr>
-          </thead>
-          <tbody id="mchEvItemsBody">
-            <tr><td colspan="2" class="empty-note">Waiting for first update…</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="table-total"><span>Total</span><span id="mchEvItemsTotal">0</span></div>
-    </div>
-  </div>
-
-  <button class="daybook-toggle" id="daybookToggle">
-    <span>View Day Book &amp; Ledger Entries</span>
-    <span class="chev">▾</span>
-  </button>
-  <div id="daybookPanel">
+  <div id="tabDaybook" style="display:none;">
     <div class="daybook-loading" id="daybookLoading" style="display:none;">Loading vouchers…</div>
     <div id="daybookContent"></div>
+  </div>
+
+  <div id="tabReceivables" style="display:none;">
+    <div class="rec-tools">
+      <input type="search" class="rec-search" id="recSearch" placeholder="Search party name…">
+      <span class="rec-sum" id="recAsOf"></span>
+    </div>
+    <div id="recContent"><div class="daybook-loading">Loading receivables…</div></div>
   </div>
 
   <div class="status-banner" id="statusBanner">Lost connection to the dashboard feed — showing last known numbers.</div>
@@ -437,31 +474,6 @@ function updateItemSalesTable(items){
   }).join('');
 }
 
-function fmtQty(q){
-  return (q % 1 === 0) ? String(q) : q.toFixed(1);
-}
-
-// Item name + quantity table with a total line. `items` is null when the
-// saved record(s) predate this section (no item list stored for that day).
-function updateQtyTable(bodyId, totalId, items, emptyMsg){
-  const body = document.getElementById(bodyId);
-  const totalEl = document.getElementById(totalId);
-  if (items === null){
-    body.innerHTML = '<tr><td colspan="2" class="empty-note">Item list not saved for this date yet — run the backfill to fill it in.</td></tr>';
-    totalEl.textContent = '–';
-    return;
-  }
-  if (!items || items.length === 0){
-    body.innerHTML = `<tr><td colspan="2" class="empty-note">${escapeHtml(emptyMsg)}</td></tr>`;
-    totalEl.textContent = '0';
-    return;
-  }
-  body.innerHTML = items.map(it =>
-    `<tr><td>${escapeHtml(it.name)}</td><td class="qty-col">${fmtQty(it.qty)}</td></tr>`
-  ).join('');
-  totalEl.textContent = fmtQty(items.reduce((sum, it) => sum + (it.qty || 0), 0));
-}
-
 function updateSimpleStat(key, value){
   const card = document.querySelector(`.card[data-stat="${key}"]`);
   if (!card) return;
@@ -497,12 +509,9 @@ function applyData(data){
   updateSimpleStat('service_revenue', fmtINR(data.service_revenue ?? 0));
   updateSimpleStat('tyre_revenue', fmtINR(data.tyre_revenue ?? 0));
 
-  renderMoneyRows('serviceMoneyRows', data.money?.service?.cash, data.money?.service?.bank);
-  renderMoneyRows('tyresMoneyRows', data.money?.tyres?.cash, data.money?.tyres?.bank);
+  renderCashBook();
 
   updateItemSalesTable(data.item_sales ?? []);
-  updateQtyTable('pcrItemsBody', 'pcrItemsTotal', data.pcr_items ?? null, 'No PCR sales recorded for this period.');
-  updateQtyTable('mchEvItemsBody', 'mchEvItemsTotal', data.mch_ev_items ?? null, 'No MC-H / Scooter EV sales recorded for this period.');
 
   const banner = document.getElementById('statusBanner');
   if (data.status === 'error'){
@@ -587,14 +596,10 @@ function mergeKpiDocs(docs){
     alignment: 0, balancing: 0, pcr: 0, puncture: 0,
     service_revenue: 0, tyre_revenue: 0,
     item_sales: [],
-    pcr_items: [], mch_ev_items: [],
     money: { service: { cash: {}, bank: {} }, tyres: { cash: {}, bank: {} } },
     status: 'ok', error: null,
   };
   const itemTotals = {};
-  const pcrTotals = {};
-  const mchEvTotals = {};
-  let anyPcrList = false, anyMchEvList = false;
   for (const d of docs){
     merged.alignment += d.alignment ?? 0;
     merged.balancing += d.balancing ?? 0;
@@ -605,28 +610,10 @@ function mergeKpiDocs(docs){
     for (const it of (d.item_sales ?? [])){
       itemTotals[it.name] = (itemTotals[it.name] || 0) + it.qty;
     }
-    if (Array.isArray(d.pcr_items)){
-      anyPcrList = true;
-      for (const it of d.pcr_items){
-        pcrTotals[it.name] = (pcrTotals[it.name] || 0) + it.qty;
-      }
-    }
-    if (Array.isArray(d.mch_ev_items)){
-      anyMchEvList = true;
-      for (const it of d.mch_ev_items){
-        mchEvTotals[it.name] = (mchEvTotals[it.name] || 0) + it.qty;
-      }
-    }
   }
   merged.item_sales = Object.entries(itemTotals)
     .map(([name, qty]) => ({ name, qty }))
     .sort((a, b) => b.qty - a.qty);
-  const toSortedList = (totals) => Object.entries(totals)
-    .map(([name, qty]) => ({ name, qty }))
-    .sort((a, b) => b.qty - a.qty);
-  // null = days exist but none has the item list saved yet (needs backfill)
-  merged.pcr_items = (docs.length > 0 && !anyPcrList) ? null : toSortedList(pcrTotals);
-  merged.mch_ev_items = (docs.length > 0 && !anyMchEvList) ? null : toSortedList(mchEvTotals);
   merged.money.service.cash = mergeLedgerMaps(docs.map(d => d.money?.service?.cash));
   merged.money.service.bank = mergeLedgerMaps(docs.map(d => d.money?.service?.bank));
   merged.money.tyres.cash = mergeLedgerMaps(docs.map(d => d.money?.tyres?.cash));
@@ -639,7 +626,6 @@ function mergeKpiDocs(docs){
 // ---------------------------------------------------------------------
 let currentMode = { type: 'today' };
 let liveUnsubscribe = null;
-let dayBookOpen = false;
 
 function setActiveButton(id){
   document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
@@ -666,6 +652,7 @@ function showStatus(message){
 async function loadDashboard(mode){
   currentMode = mode;
   detachLiveListener();
+  renderCashBook();
 
   if (mode.type === 'today'){
     document.getElementById('viewLabel').innerHTML = '<span class="live-dot"></span> Showing: Today (live)';
@@ -729,43 +716,140 @@ async function loadDashboard(mode){
 }
 
 // ---------------------------------------------------------------------
-// Day Book viewer (lazy-loaded)
+// Cash / bank book (closing balance as on the "To" date)
 // ---------------------------------------------------------------------
+const cashbookDocs = { auto_care: null, tyres: null };
+let cashbookUnsubs = [];
+
+function startCashBookListeners(){
+  stopCashBookListeners();
+  for (const biz of ['auto_care', 'tyres']){
+    cashbookUnsubs.push(db.collection('cashbook_history').doc(biz).onSnapshot(
+      (doc) => { cashbookDocs[biz] = doc.exists ? doc.data() : null; renderCashBook(); },
+      (err) => { console.error(err); cashbookDocs[biz] = { error: err.code || 'error' }; renderCashBook(); }
+    ));
+  }
+}
+function stopCashBookListeners(){
+  cashbookUnsubs.forEach(u => u());
+  cashbookUnsubs = [];
+}
+
+function currentAsOnISO(){
+  if (currentMode.type === 'period') return currentMode.end;
+  if (currentMode.type === 'date') return currentMode.date;
+  return todayISO();
+}
+
+function fmtBal(n){
+  // positive = Dr (balance in hand / bank), negative = Cr (overdrawn)
+  const abs = Math.abs(Math.round(n));
+  const label = '₹' + abs.toLocaleString('en-IN');
+  return n < -0.5 ? `${label}<span class="drcr">Cr</span>` : label;
+}
+
+function renderCashBookInto(containerId, doc, asOnIso){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!doc){ el.innerHTML = '<div class="empty-note">No data yet</div>'; return; }
+  if (doc.error){ el.innerHTML = '<div class="empty-note">No permission to read — update Firestore rules.</div>'; return; }
+  const keys = Object.keys(doc.days || {}).sort();
+  const want = asOnIso.replace(/-/g, '');
+  let key = null;
+  for (const k of keys){ if (k <= want) key = k; else break; }
+  if (!key){ el.innerHTML = '<div class="empty-note">Before the start of this financial year.</div>'; return; }
+  const vals = doc.days[key];
+  const groups = { cash: [], bank: [] };
+  (doc.ledgers || []).forEach((l, i) => {
+    const v = Number(vals[i] || 0);
+    if (Math.abs(v) >= 0.5) groups[l.k === 'cash' ? 'cash' : 'bank'].push({ name: l.n, v });
+  });
+  const parts = [];
+  for (const [kind, title] of [['cash', 'Cash'], ['bank', 'Bank']]){
+    if (!groups[kind].length) continue;
+    parts.push(`<div class="money-sub">${title}</div>`);
+    for (const r of groups[kind]){
+      parts.push(`<div class="money-row"><span class="money-label">${escapeHtml(r.name)}</span><span class="money-amt${r.v < 0 ? ' cr' : ''}">${fmtBal(r.v)}</span></div>`);
+    }
+  }
+  const total = groups.cash.concat(groups.bank).reduce((a, r) => a + r.v, 0);
+  parts.push(`<div class="money-row total"><span class="money-label">Total</span><span class="money-amt${total < 0 ? ' cr' : ''}">${fmtBal(total)}</span></div>`);
+  el.innerHTML = parts.join('');
+}
+
+function renderCashBook(){
+  const asOn = currentAsOnISO();
+  document.getElementById('cashAsOn').textContent = ' · closing balance as on ' + asOn.split('-').reverse().join('-') +
+    (asOn === todayISO() ? ' (live)' : '');
+  renderCashBookInto('serviceMoneyRows', cashbookDocs.auto_care, asOn);
+  renderCashBookInto('tyresMoneyRows', cashbookDocs.tyres, asOn);
+}
+
+// ---------------------------------------------------------------------
+// Day Book viewer -- grouped by voucher type, per company
+// ---------------------------------------------------------------------
+function voucherValue(v){
+  // Sales-type vouchers carry a party-ledger total; for receipts, payments,
+  // journals and contras fall back to the sum of credit postings (which
+  // equals the voucher value because every voucher balances).
+  const t = Number(v.total || 0);
+  if (t > 0.004) return t;
+  return (v.ledgers || []).reduce((a, l) => a + (Number(l.amount) > 0 ? Number(l.amount) : 0), 0);
+}
+
+function renderVoucherRow(v){
+  const itemsRows = (v.items || []).map(it => {
+    const qty = (it.qty % 1 === 0) ? it.qty : it.qty.toFixed(1);
+    return `<tr><td>${escapeHtml(it.name)}</td><td class="num">${qty}</td><td class="num">${fmtINR(Number(it.amount))}</td></tr>`;
+  }).join('');
+  const ledgerRows = (v.ledgers || []).map(l => {
+    const a = Number(l.amount);
+    return `<tr><td>${escapeHtml(l.name)}</td><td class="num">${fmtINR(Math.abs(a))} ${a < 0 ? 'Dr' : 'Cr'}</td></tr>`;
+  }).join('');
+  const dateLabel = v.date ? v.date.slice(6,8) + '-' + v.date.slice(4,6) + '-' + v.date.slice(0,4) : '—';
+  return `
+    <details class="voucher-row">
+      <summary>
+        <span class="v-date">${dateLabel}</span>
+        <span class="v-party">${escapeHtml(v.party || '(no party)')}${v.number ? ' <span style="color:var(--text-dim);font-weight:500">#' + escapeHtml(v.number) + '</span>' : ''}</span>
+        <span class="v-total">${fmtINR(voucherValue(v))}</span>
+      </summary>
+      <div class="voucher-detail">
+        ${itemsRows ? `<div class="voucher-detail-title">Items</div>
+        <table class="detail-table">
+          <thead><tr><td><b>Item</b></td><td class="num"><b>Qty</b></td><td class="num"><b>Amount</b></td></tr></thead>
+          <tbody>${itemsRows}</tbody>
+        </table>` : ''}
+        ${ledgerRows ? `<div class="voucher-detail-title">Ledger postings</div>
+        <table class="detail-table">
+          <thead><tr><td><b>Ledger</b></td><td class="num"><b>Amount</b></td></tr></thead>
+          <tbody>${ledgerRows}</tbody>
+        </table>` : ''}
+      </div>
+    </details>`;
+}
+
 function renderVoucherList(vouchers){
   if (!vouchers || vouchers.length === 0){
     return '<div class="daybook-empty">No vouchers for this period.</div>';
   }
-  return vouchers.map(v => {
-    const itemsRows = (v.items || []).map(it => {
-      const qty = (it.qty % 1 === 0) ? it.qty : it.qty.toFixed(1);
-      return `<tr><td>${escapeHtml(it.name)}</td><td class="num">${qty}</td><td class="num">${fmtINR(Number(it.amount))}</td></tr>`;
-    }).join('');
-    const ledgerRows = (v.ledgers || []).map(l => {
-      return `<tr><td>${escapeHtml(l.name)}</td><td class="num">${fmtINR(Number(l.amount))}</td></tr>`;
-    }).join('');
-    const dateLabel = v.date ? v.date.slice(6,8) + '-' + v.date.slice(4,6) + '-' + v.date.slice(0,4) : '—';
-    return `
-      <details class="voucher-row">
+  const groups = {};
+  for (const v of vouchers){
+    const t = v.type || '(no type)';
+    (groups[t] = groups[t] || []).push(v);
+  }
+  return Object.entries(groups)
+    .map(([type, list]) => ({ type, list, total: list.reduce((a, v) => a + voucherValue(v), 0) }))
+    .sort((a, b) => b.list.length - a.list.length)
+    .map(g => `
+      <details class="type-group">
         <summary>
-          <span class="v-date">${dateLabel}</span>
-          <span class="v-party">${escapeHtml(v.party || '(no party)')}</span>
-          <span class="v-type">${escapeHtml(v.type || '')}</span>
-          <span class="v-total">${fmtINR(Number(v.total))}</span>
+          <span class="tg-name">${escapeHtml(g.type)}</span>
+          <span class="tg-count">${g.list.length} voucher${g.list.length === 1 ? '' : 's'}</span>
+          <span class="tg-total">${fmtINR(g.total)}</span>
         </summary>
-        <div class="voucher-detail">
-          ${itemsRows ? `<div class="voucher-detail-title">Items</div>
-          <table class="detail-table">
-            <thead><tr><td><b>Item</b></td><td class="num"><b>Qty</b></td><td class="num"><b>Amount</b></td></tr></thead>
-            <tbody>${itemsRows}</tbody>
-          </table>` : ''}
-          ${ledgerRows ? `<div class="voucher-detail-title">Ledger Postings</div>
-          <table class="detail-table">
-            <thead><tr><td><b>Ledger</b></td><td class="num"><b>Amount</b></td></tr></thead>
-            <tbody>${ledgerRows}</tbody>
-          </table>` : ''}
-        </div>
-      </details>`;
-  }).join('');
+        <div class="tg-body">${g.list.map(renderVoucherRow).join('')}</div>
+      </details>`).join('');
 }
 
 async function loadDayBook(mode){
@@ -794,8 +878,8 @@ async function loadDayBook(mode){
       }
     }
     contentEl.innerHTML =
-      '<div class="daybook-company-title">Akash Auto Care</div>' + renderVoucherList(serviceVouchers) +
-      '<div class="daybook-company-title">Akash Tyres</div>' + renderVoucherList(tyresVouchers);
+      '<div class="daybook-company-title">Akash Tyres</div>' + renderVoucherList(tyresVouchers) +
+      '<div class="daybook-company-title">Akash Auto Care</div>' + renderVoucherList(serviceVouchers);
   } catch (e){
     contentEl.innerHTML = '<div class="daybook-empty">Could not load Day Book data.</div>';
     console.error(e);
@@ -804,22 +888,99 @@ async function loadDayBook(mode){
   }
 }
 
-document.getElementById('daybookToggle').addEventListener('click', () => {
-  const toggle = document.getElementById('daybookToggle');
-  const panel = document.getElementById('daybookPanel');
-  dayBookOpen = !dayBookOpen;
-  toggle.classList.toggle('open', dayBookOpen);
-  panel.classList.toggle('open', dayBookOpen);
-  if (dayBookOpen){
-    loadDayBook(currentMode);
+// ---------------------------------------------------------------------
+// Receivables (Sundry Debtors, FIFO ageing as on the last sync)
+// ---------------------------------------------------------------------
+const recDocs = { tyres: null, auto_care: null };
+let recUnsubs = [];
+let activeTab = 'Dashboard';
+
+function startReceivablesListeners(){
+  stopReceivablesListeners();
+  for (const biz of ['tyres', 'auto_care']){
+    recUnsubs.push(db.collection('receivables_snapshot').doc(biz).onSnapshot(
+      (doc) => { recDocs[biz] = doc.exists ? doc.data() : null; renderReceivables(); },
+      (err) => { console.error(err); recDocs[biz] = { error: err.code || 'error' }; renderReceivables(); }
+    ));
   }
-});
+}
+function stopReceivablesListeners(){
+  recUnsubs.forEach(u => u());
+  recUnsubs = [];
+}
+
+function recCell(n, extraClass){
+  const v = Number(n || 0);
+  if (Math.abs(v) < 0.5) return `<td class="zero">–</td>`;
+  return `<td class="${extraClass || ''}">${Math.round(v).toLocaleString('en-IN')}</td>`;
+}
+
+function renderRecSection(title, doc, q){
+  if (!doc) return `<div class="rec-head"><span class="rec-title">${title}</span></div><div class="daybook-empty">No receivables data yet — it appears after the next sync on the SHOP PC.</div>`;
+  if (doc.error) return `<div class="rec-head"><span class="rec-title">${title}</span></div><div class="daybook-empty">No permission to read — update Firestore rules.</div>`;
+  const t = doc.totals || {};
+  const rows = (doc.rows || []).filter(r => !q || r.n.toLowerCase().includes(q));
+  const body = rows.map(r => `
+    <tr data-ledger="${escapeHtml(r.n)}">
+      <td>${escapeHtml(r.n)}${r.g && r.g !== 'Sundry Debtors' ? `<div class="rec-grp">${escapeHtml(r.g)}</div>` : ''}</td>
+      ${recCell(r.bal, 'bal')}${recCell(r.b1)}${recCell(r.b2)}${recCell(r.b3)}${recCell(r.b4, 'old')}
+    </tr>`).join('');
+  const adv = (doc.advances || []).filter(a => !q || a.n.toLowerCase().includes(q));
+  const advHtml = adv.length ? `
+    <details class="adv-toggle"><summary>Advances / credit balances — ${adv.length} part${adv.length === 1 ? 'y' : 'ies'}, ₹${Math.round(adv.reduce((a, x) => a + x.adv, 0)).toLocaleString('en-IN')}</summary>
+      <div class="rec-card"><table class="rec"><thead><tr><th>Party</th><th>Advance (Cr)</th></tr></thead><tbody>
+        ${adv.map(a => `<tr><td>${escapeHtml(a.n)}</td><td>${Math.round(a.adv).toLocaleString('en-IN')}</td></tr>`).join('')}
+      </tbody></table></div>
+    </details>` : '';
+  return `
+    <div class="rec-head">
+      <span class="rec-title">${title}</span>
+      <span class="rec-sum">Outstanding <b>${fmtINR(t.bal)}</b> · ${(doc.rows || []).length} parties</span>
+    </div>
+    <div class="rec-card"><div class="rec-scroll"><table class="rec">
+      <thead><tr><th>Party</th><th>Ledger balance</th><th>0–30 days</th><th>31–60 days</th><th>61–90 days</th><th>90+ days</th></tr></thead>
+      <tbody>
+        <tr class="totalrow"><td>Total</td>${recCell(t.bal)}${recCell(t.b1)}${recCell(t.b2)}${recCell(t.b3)}${recCell(t.b4)}</tr>
+        ${body || '<tr><td colspan="6" class="empty-note">No matching parties.</td></tr>'}
+      </tbody></table></div></div>
+    ${advHtml}`;
+}
+
+function renderReceivables(){
+  if (activeTab !== 'Receivables') return;
+  const q = document.getElementById('recSearch').value.trim().toLowerCase();
+  document.getElementById('recContent').innerHTML =
+    renderRecSection('Akash Tyres', recDocs.tyres, q) + renderRecSection('Akash Auto Care', recDocs.auto_care, q);
+  const stamps = ['tyres', 'auto_care'].map(b => recDocs[b] && recDocs[b].asOf).filter(Boolean).sort();
+  document.getElementById('recAsOf').textContent = stamps.length
+    ? 'As on ' + new Date(stamps[0]).toLocaleString() + ' · ageing counts from voucher date, receipts applied to oldest bills first'
+    : '';
+}
+document.getElementById('recSearch').addEventListener('input', renderReceivables);
+
+// ---------------------------------------------------------------------
+// Tabs
+// ---------------------------------------------------------------------
+function switchTab(name){
+  activeTab = name;
+  document.body.dataset.tab = name;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  for (const t of ['Dashboard', 'Daybook', 'Receivables']){
+    document.getElementById('tab' + t).style.display = (t === name) ? 'block' : 'none';
+  }
+  // the date bar is only relevant on Dashboard and Day Book
+  document.getElementById('dateBar').style.display = (name === 'Receivables') ? 'none' : 'block';
+  if (name === 'Daybook') loadDayBook(currentMode);
+  if (name === 'Receivables') renderReceivables();
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
 // ---------------------------------------------------------------------
 // Controls wiring
 // ---------------------------------------------------------------------
 function applyFromTo(){
-  if (dayBookOpen) loadDayBook(currentMode);
+  if (activeTab === 'Daybook') loadDayBook(currentMode);
 }
 
 document.getElementById('btnToday').addEventListener('click', () => {
@@ -895,6 +1056,8 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
 
 document.getElementById('logoutLink').addEventListener('click', () => {
   detachLiveListener();
+  stopCashBookListeners();
+  stopReceivablesListeners();
   auth.signOut();
 });
 
@@ -906,10 +1069,14 @@ auth.onAuthStateChanged((user) => {
     document.getElementById('fromDate').value = t;
     document.getElementById('toDate').value = t;
     loadDashboard({ type: 'today' });
+    startCashBookListeners();
+    startReceivablesListeners();
   } else {
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('appContent').style.display = 'none';
     detachLiveListener();
+    stopCashBookListeners();
+    stopReceivablesListeners();
   }
 });
 </script>
